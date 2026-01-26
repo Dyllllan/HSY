@@ -1,0 +1,15 @@
+{% if user.is_authenticated %}
+    <div class="dropdown">
+        <button class="btn btn-link dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i>
+            {{ user.first_name|default:user.email }}
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'profile_view' %}">我的档案</a></li>
+            <li><a class="dropdown-item" href="{% url 'account_logout' %}">退出登录</a></li>
+        </ul>
+    </div>
+{% else %}
+    <a href="{% url 'account_login' %}" class="btn btn-outline-primary btn-sm">登录</a>
+    <a href="{% url 'account_signup' %}" class="btn btn-primary btn-sm ms-2">注册</a>
+{% endif %}

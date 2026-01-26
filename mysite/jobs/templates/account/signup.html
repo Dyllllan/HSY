@@ -1,0 +1,177 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* 移动端注册登录样式 */
+    .auth-container {
+        max-width: 100%;
+        padding: 20px;
+    }
+    
+    .auth-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-top: 30px;
+    }
+    
+    .auth-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 30px 20px;
+    }
+    
+    .form-control-mobile {
+        height: 50px;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 10px 15px;
+        font-size: 16px;
+    }
+    
+    .form-control-mobile:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-auth {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        height: 50px;
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        width: 100%;
+    }
+    
+    /* 移动端优化 */
+    @media (max-width: 768px) {
+        .auth-container {
+            padding: 10px;
+        }
+        
+        .auth-card {
+            margin-top: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container auth-container">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="auth-card card">
+                <div class="auth-header text-center">
+                    <h3 class="mb-1">学生注册</h3>
+                    <p class="mb-0 opacity-75">加入我们，找到理想工作</p>
+                </div>
+                
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="{% url 'account_signup' %}">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 基本信息 -->
+                        <div class="mb-3">
+                            <label for="id_full_name" class="form-label">真实姓名</label>
+                            {{ form.full_name }}
+                            {% if form.full_name.errors %}
+                            <div class="text-danger small">{{ form.full_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_email" class="form-label">邮箱地址</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_password1" class="form-label">设置密码</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                            <div class="text-danger small">{{ form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 学生信息 -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_school" class="form-label">所在学校</label>
+                                {{ form.school }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_major" class="form-label">所学专业</label>
+                                {{ form.major }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_graduation_year" class="form-label">毕业年份</label>
+                            {{ form.graduation_year }}
+                        </div>
+                        
+                        <!-- 求职偏好 -->
+                        <div class="mb-3">
+                            <label class="form-label">求职类型（可多选）</label>
+                            <div class="border rounded p-3">
+                                {{ form.preferred_job_types }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_preferred_locations" class="form-label">期望工作城市</label>
+                            {{ form.preferred_locations }}
+                            <div class="form-text">多个城市用逗号分隔，如：北京,上海,深圳</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-auth">立即注册</button>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <p class="mb-0">
+                                已有账号？
+                                <a href="{% url 'account_login' %}" class="text-decoration-none fw-bold">立即登录</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 移动端表单优化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 为所有表单字段添加移动端样式
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.classList.add('form-control-mobile');
+        });
+        
+        // 处理多选框样式
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.classList.remove('form-control-mobile');
+            checkbox.style.height = 'auto';
+        });
+    });
+</script>
+{% endblock %}
