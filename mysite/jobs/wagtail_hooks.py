@@ -1,7 +1,56 @@
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel, TabbedInterface, ObjectList
-from .models import StudentProfile
+from .models import StudentProfile, JobPage
+from wagtail.admin.ui.tables import DateColumn
+from wagtail.admin.views.generic.models import IndexView
+from wagtail import hooks
+from wagtail.admin.menu import MenuItem
+from django.urls import reverse, path
+from django.db.models import Count
+
+@hooks.register('register_admin_menu_item')
+def register_job_stats_menu_item():
+    return MenuItem(
+        label='职位统计',
+        url=reverse('job_stats'),
+        icon_name='chart-bar',
+        order=1000
+    )
+
+class JobStatsView(IndexView):
+    model = JobPage
+    template_name = 'jobs/admin/job_stats.html'
+    page_title = '职位数据统计'
+    
+    def get_queryset(self):
+        # 按来源网站分组统计
+        return super().get_queryset()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # 添加统计数据
+        context['stats'] = {
+            'total_jobs': JobPage.objects.count(),
+            'by_source': JobPage.objects.values('source_website').annotate(count=Count('id')),
+            'by_type': JobPage.objects.values('job_type').annotate(count=Count('id')),
+        }
+        return context
+
+@hooks.register('register_admin_urls')
+def register_job_stats_url():
+    return [
+        path('job-stats/', JobStatsView.as_view(), name='job_stats'),
+    ]
+
+# 在职位列表中添加自定义列和批量操作
+@hooks.register('construct_explorer_page_queryset')
+def filter_jobs_by_source(parent_page, pages, request):
+    # 允许按来源筛选
+    source = request.GET.get('source')
+    if source:
+        pages = pages.filter(source_website=source)
+    return pages
 
 class StudentProfileViewSet(SnippetViewSet):
     """在Wagtail后台管理学生档案"""

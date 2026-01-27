@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}我的工作台 - 学生求职{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+    <!-- 用户概览卡片 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 opacity-75">收藏职位</h6>
+                            <h3 class="card-title mb-0">{{ saved_count }}</h3>
+                        </div>
+                        <i class="bi bi-bookmarks display-4 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 opacity-75">已申请</h6>
+                            <h3 class="card-title mb-0">{{ applied_count }}</h3>
+                        </div>
+                        <i class="bi bi-send-check display-4 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 opacity-75">匹配度</h6>
+                            <h3 class="card-title mb-0">{{ match_rate }}%</h3>
+                        </div>
+                        <i class="bi bi-percent display-4 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 收藏和申请记录 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bookmark me-2"></i>收藏的职位
+                        <span class="badge bg-primary float-end">{{ saved_count }}</span>
+                    </h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for app in saved_applications %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ app.job_page.job_title }}</h6>
+                            <small class="text-muted">{{ app.updated_at|date:"m-d" }}</small>
+                        </div>
+                        <p class="mb-1 small text-muted">
+                            <i class="bi bi-building"></i> {{ app.job_page.company_name }}
+                            <span class="ms-2"><i class="bi bi-cash"></i> {{ app.job_page.salary|default:"面议" }}</span>
+                        </p>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">{{ app.job_page.location }}</small>
+                            <div>
+                                <a href="{% pageurl app.job_page %}" class="btn btn-sm btn-outline-primary btn-touch">查看</a>
+                                <button class="btn btn-sm btn-outline-danger btn-touch" data-job-id="{{ app.job_page.id }}" onclick="unsaveJob(this.dataset.jobId)">
+                                    移除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-4 text-muted">
+                        <i class="bi bi-bookmark display-4 opacity-50"></i>
+                        <p class="mt-2">暂无收藏的职位</p>
+                        <a href="/jobs/" class="btn btn-sm btn-outline-primary">去发现职位</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-send me-2"></i>申请记录
+                        <span class="badge bg-success float-end">{{ applied_count }}</span>
+                    </h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for app in applied_applications %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ app.job_page.job_title }}</h6>
+                                <p class="mb-1 small text-muted">{{ app.job_page.company_name }}</p>
+                            </div>
+                            <span class="badge {% if app.status == 'applied' %}bg-warning{% elif app.status == 'contacted' %}bg-info{% elif app.status == 'accepted' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ app.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                {{ app.applied_date|date:"Y-m-d H:i" }}
+                            </small>
+                            <div>
+                                {% if app.job_page.source_url %}
+                                <a href="{{ app.job_page.source_url }}" target="_blank" class="btn btn-sm btn-primary btn-touch">
+                                    前往申请
+                                </a>
+                                {% endif %}
+                                <button class="btn btn-sm btn-outline-secondary btn-touch" data-bs-toggle="modal" data-bs-target="#notesModal{{ app.id }}">
+                                    备注
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center py-4 text-muted">
+                        <i class="bi bi-send display-4 opacity-50"></i>
+                        <p class="mt-2">暂无申请记录</p>
+                        <a href="/recommendations/" class="btn btn-sm btn-outline-primary">查看推荐职位</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 个人档案快速编辑 -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="bi bi-person me-2"></i>我的档案</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">学校</dt>
+                        <dd class="col-sm-8">{{ profile.get_school_display }}</dd>
+                        
+                        <dt class="col-sm-4">专业</dt>
+                        <dd class="col-sm-8">{{ profile.get_major_display }}</dd>
+                        
+                        <dt class="col-sm-4">毕业年份</dt>
+                        <dd class="col-sm-8">{{ profile.graduation_year }}</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">求职类型</dt>
+                        <dd class="col-sm-8">
+                            {% for type in profile.get_preferred_job_types_list %}
+                            <span class="badge bg-primary me-1">{{ type }}</span>
+                            {% endfor %}
+                        </dd>
+                        
+                        <dt class="col-sm-4">期望城市</dt>
+                        <dd class="col-sm-8">{{ profile.preferred_locations }}</dd>
+                        
+                        <dt class="col-sm-4">简历状态</dt>
+                        <dd class="col-sm-8">
+                            {% if profile.resume %}
+                            <span class="badge bg-success">已上传</span>
+                            {% else %}
+                            <span class="badge bg-warning">未上传</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <a href="{% url 'account_profile' %}" class="btn btn-primary">编辑档案</a>
+                <a href="{% url 'account_resume' %}" class="btn btn-outline-primary ms-2">管理简历</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 备注编辑模态框模板 -->
+{% for app in applied_applications %}
+<div class="modal fade" id="notesModal{{ app.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">申请备注</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <textarea class="form-control" rows="4" id="notesText{{ app.id }}">{{ app.notes }}</textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" data-app-id="{{ app.id }}" onclick="saveNotes(this.dataset.appId)">保存备注</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    // 移除收藏
+    function unsaveJob(jobId) {
+        fetch('/api/toggle-save-job/', {
+            method: 'POST',
+            headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+            body: JSON.stringify({job_id: jobId})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.action === 'unsaved') {
+                location.reload(); // 简单刷新页面
+            }
+        });
+    }
+    
+    // 保存备注
+    function saveNotes(applicationId) {
+        const notes = document.getElementById(`notesText${applicationId}`).value;
+        fetch(`/api/update-application-notes/${applicationId}/`, {
+            method: 'POST',
+            headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+            body: JSON.stringify({notes: notes})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById(`notesModal${applicationId}`));
+                modal.hide();
+                showToast('备注已保存');
+            }
+        });
+    }
+    
+    function showToast(message) {
+        // 简单的提示实现
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed bottom-0 end-0 p-3';
+        toast.innerHTML = `
+            <div class="toast show" role="alert">
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+</script>
+{% endblock %}

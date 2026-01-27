@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block title %}为您推荐的职位{% endblock %}
+
+{% block extra_css %}
+<style>
+    .recommendation-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #ff4081, #ff6b9d);
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        z-index: 1;
+    }
+    
+    .match-score {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+        border-radius: 50%;
+        background: #4CAF50;
+        color: white;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    
+    .recommendation-reason {
+        font-size: 0.85rem;
+        color: #666;
+        background: #f8f9fa;
+        padding: 8px;
+        border-radius: 8px;
+        margin-top: 8px;
+    }
+    
+    .filter-chip {
+        display: inline-block;
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin: 2px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+    <!-- 个性化推荐头部 -->
+    <div class="card bg-primary text-white mb-3" style="border-radius: 15px;">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <i class="bi bi-stars display-4"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h4 class="card-title">为您个性化推荐</h4>
+                    <p class="card-text mb-2">
+                        根据您的
+                        {% for type in profile.get_preferred_job_types_list %}
+                        <span class="badge bg-light text-dark me-1">{{ type }}</span>
+                        {% endfor %}
+                        偏好和
+                        <span class="badge bg-light text-dark">{{ profile.get_school_display }}</span>
+                        背景匹配
+                    </p>
+                    <div>
+                        {% for location in profile.preferred_locations|split:"," %}
+                        <span class="filter-chip">{{ location }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 推荐职位列表 -->
+    <div class="row g-3">
+        {% for job in recommendations %}
+        <div class="col-12">
+            <div class="card job-card position-relative">
+                <span class="recommendation-badge">
+                    推荐 {% if forloop.first %}♥{% elif forloop.counter <= 3 %}⭐{% endif %}
+                </span>
+                
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="match-score">
+                            {% widthratio forloop.revcounter recommendations|length 100 as score %}
+                            {{ score|add:"0"|floatformat:0 }}
+                        </div>
+                        
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="card-title mb-1">{{ job.job_title }}</h5>
+                                    <p class="card-text text-muted small mb-1">
+                                        <i class="bi bi-building"></i> {{ job.company_name }}
+                                    </p>
+                                </div>
+                                <span class="badge {% if job.job_type == 'intern' %}bg-info{% elif job.job_type == 'fulltime' %}bg-success{% else %}bg-warning{% endif %}">
+                                    {{ job.get_job_type_display }}
+                                </span>
+                            </div>
+                            
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <span class="text-primary fw-bold">{{ job.salary|default:"面议" }}</span>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <span class="text-muted small">
+                                        <i class="bi bi-geo-alt"></i> {{ job.location }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- 推荐理由 -->
+                            <div class="recommendation-reason">
+                                <i class="bi bi-lightbulb me-1"></i>
+                                {% if job.job_type in profile.get_preferred_job_types_list %}
+                                符合您的职位类型偏好
+                                {% elif profile.major == 'cs' and '计算机' in job.description %}
+                                与您的计算机专业相关
+                                {% elif '应届' in job.description or '毕业生' in job.description %}
+                                接受应届毕业生
+                                {% else %}
+                                与您的个人档案匹配
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-globe"></i> {{ job.source_website }}
+                                </span>
+                                <div>
+                                    <a href="{% pageurl job %}" class="btn btn-sm btn-primary btn-touch">
+                                        查看详情
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-secondary btn-touch save-job" data-job-id="{{ job.id }}">
+                                        <i class="bi bi-bookmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-emoji-frown display-1 text-muted"></i>
+                <p class="text-muted mt-3">暂无个性化推荐</p>
+                <p class="small text-muted">请完善您的<a href="{% url 'account_profile' %}">个人档案</a>或尝试浏览<a href="/jobs/">所有职位</a></p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // 为推荐页面添加额外的交互
+    document.addEventListener('DOMContentLoaded', function() {
+        // 点击推荐理由显示详细信息
+        document.querySelectorAll('.recommendation-reason').forEach(reason => {
+            reason.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+                if (this.classList.contains('expanded')) {
+                    this.style.whiteSpace = 'normal';
+                } else {
+                    this.style.whiteSpace = 'nowrap';
+                    this.style.overflow = 'hidden';
+                    this.style.textOverflow = 'ellipsis';
+                }
+            });
+        });
+        
+        // 发送推荐点击统计
+        document.querySelectorAll('.job-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const jobId = this.dataset.jobId;
+                if (jobId) {
+                    fetch('/api/track-recommendation-click/', {
+                        method: 'POST',
+                        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                        body: JSON.stringify({
+                            job_id: jobId,
+                            recommendation_type: 'personalized'
+                        })
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -4,6 +4,8 @@ from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel,MultiFieldPanel
 from django.conf import settings
 from django.utils import timezone
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from modelcluster.fields import ParentalKey
 # Create your models here.
 class JobPage(Page):
     # 基础信息
@@ -45,6 +47,64 @@ class JobPage(Page):
         ], heading="分类与来源"),
     ]
 
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+        from django.db.models import Q
+        # 获取所有子页面（职位）
+        job_pages = self.get_children().live().specific()
+        
+        # 按类型筛选
+        job_type = request.GET.get('job_type')
+        if job_type:
+            job_pages = job_pages.filter(job_type=job_type)
+        
+        # 关键词搜索（标题、公司、描述）
+        search_query = request.GET.get('q')
+        if search_query:
+            job_pages = job_pages.filter(
+                Q(title__icontains=search_query) |
+                Q(company_name__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        
+        # 分页（每页15条，适合移动端）
+        paginator = Paginator(job_pages, 15)
+        page = request.GET.get('page')
+        try:
+            job_pages = paginator.page(page)
+        except PageNotAnInteger:
+            job_pages = paginator.page(1)
+        except EmptyPage:
+            job_pages = paginator.page(paginator.num_pages)
+        
+        # 添加到上下文
+        context['job_pages'] = job_pages
+        context['job_types'] = JobPage.JOB_TYPES  # 用于筛选标签
+        return context
+
+    @property
+    def save_count(self):
+        """收藏数量"""
+        return self.applications.filter(status='saved').count()
+    
+    @property
+    def apply_count(self):
+        """申请数量"""
+        return self.applications.filter(status='applied').count()
+    
+    def is_saved_by_user(self, user):
+        """检查用户是否已收藏"""
+        if not user.is_authenticated:
+            return False
+        return self.applications.filter(user=user, status='saved').exists()
+    
+    def is_applied_by_user(self, user):
+        """检查用户是否已申请"""
+        if not user.is_authenticated:
+            return False
+        return self.applications.filter(user=user, status='applied').exists()
+        
+template = "jobs/job_index_page.html"
 
 class JobIndexPage(Page):
     intro = RichTextField(blank=True, verbose_name="导语")
@@ -160,3 +220,60 @@ class StudentProfile(models.Model):
         """更新最后活跃时间"""
         self.last_active = timezone.now()
         self.save(update_fields=['last_active'])
+
+
+
+class JobApplication(models.Model):
+     STATUS_CHOICES = [
+        ('saved', '已收藏'),
+        ('applied', '已申请'),
+        ('viewed', '已查看'),
+        ('contacted', '已联系'),
+        ('rejected', '已拒绝'),
+        ('accepted', '已接受'),
+    ]
+    
+     user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='job_applications'
+    )
+    
+     job_page = ParentalKey(
+        'jobs.JobPage',
+        on_delete=models.CASCADE,
+        related_name='applications'
+    )
+    
+     status = models.CharField(
+        '申请状态',
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='saved'
+    )
+    
+     applied_date = models.DateTimeField('申请时间', null=True, blank=True)
+     notes = models.TextField('备注', blank=True)
+    
+    # 来源追踪
+     source = models.CharField('来源', max_length=50, default='website')
+     ip_address = models.GenericIPAddressField('IP地址', null=True, blank=True)
+    
+     created_at = models.DateTimeField('创建时间', auto_now_add=True)
+     updated_at = models.DateTimeField('更新时间', auto_now=True)
+    
+     class Meta:
+        unique_together = ['user', 'job_page']  # 防止重复收藏
+        verbose_name = '职位申请'
+        verbose_name_plural = '职位申请'
+        ordering = ['-updated_at']
+    
+     def __str__(self):
+        return f"{self.user.email} - {self.job_page.job_title}"
+    
+     def save(self, *args, **kwargs):
+        # 如果是第一次申请，记录申请时间
+        if self.status == 'applied' and not self.applied_date:
+            self.applied_date = timezone.now()
+        super().save(*args, **kwargs)
+
