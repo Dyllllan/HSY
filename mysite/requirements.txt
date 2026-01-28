@@ -2,3 +2,4 @@ Django>=5.2,<5.3
 wagtail>=7.2,<7.3
 PyMySQL>=1.1.0
 django-redis>=5.4.0
+brotli>=1.0.0

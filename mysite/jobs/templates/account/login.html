@@ -1,47 +1,152 @@
-{% extends "jobs/base.html" %}
+{% extends "base.html" %}
 {% load static %}
+
+{% block title %}学生登录 - 学生求职{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* 移动端注册登录样式 */
-    .auth-container {
-        max-width: 100%;
-        padding: 20px;
+    /* 登录页面样式 */
+    .login-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
     }
     
+    .login-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(255, 107, 157, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(79, 172, 254, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(240, 147, 251, 0.1) 0%, transparent 50%);
+        animation: lightMove 25s ease infinite;
+        z-index: 0;
+    }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes lightMove {
+        0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+        25% { background-position: 100% 0%, 0% 100%, 0% 0%; }
+        50% { background-position: 100% 100%, 0% 0%, 100% 100%; }
+        75% { background-position: 0% 100%, 100% 0%, 50% 0%; }
+    }
+    
+    .login-content {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+    }
+    
+    /* 登录卡片 */
     .auth-card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        margin-top: 30px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 25px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+        max-width: 500px;
+        margin: 0 auto;
     }
     
     .auth-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        border-radius: 15px 15px 0 0;
-        padding: 30px 20px;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
     }
     
-    .form-control-mobile {
+    .auth-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .auth-header-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .auth-header h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .auth-header p {
+        opacity: 0.9;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    
+    .auth-header-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+    }
+    
+    .card-body {
+        padding: 2.5rem;
+    }
+    
+    /* 表单样式 */
+    .form-label {
+        color: #2d3748;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-control {
         height: 50px;
-        border-radius: 10px;
+        border-radius: 12px;
         border: 2px solid #e9ecef;
-        padding: 10px 15px;
-        font-size: 16px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
     }
     
-    .form-control-mobile:focus {
+    .form-control:focus {
         border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        background: white;
     }
     
-    /* 确保表单字段即使没有样式类也能显示 - 使用 !important 确保优先级 */
-    /* 使用更具体的选择器确保优先级 */
+    .form-control::placeholder {
+        color: #adb5bd;
+    }
+    
+    /* 确保表单字段正确显示 */
     form input#id_login,
     form input#id_password,
-    .card-body input#id_login,
-    .card-body input#id_password,
     input[name="login"],
     input[name="password"],
     input[type="email"][name="login"],
@@ -49,137 +154,216 @@
         display: block !important;
         visibility: visible !important;
         width: 100% !important;
-        min-width: 200px !important;
         height: 50px !important;
-        min-height: 50px !important;
-        max-height: none !important;
-        padding: 10px 15px !important;
-        font-size: 16px !important;
-        line-height: 1.5 !important;
-        color: #212529 !important;
-        background-color: #fff !important;
-        background-image: none !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
         border: 2px solid #e9ecef !important;
-        border-radius: 10px !important;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        box-sizing: border-box !important;
-        margin: 0 !important;
-        opacity: 1 !important;
-        position: relative !important;
-        z-index: 1 !important;
-        overflow: visible !important;
+        border-radius: 12px !important;
+        background-color: #fff !important;
+        transition: all 0.3s ease !important;
     }
     
-    #id_login:focus, #id_password:focus,
-    input[name="login"]:focus, input[name="password"]:focus {
+    #id_login:focus, #id_password:focus {
         border-color: #667eea !important;
-        outline: 0 !important;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25) !important;
     }
     
-    #id_remember,
-    input[name="remember"],
-    input[type="checkbox"] {
-        width: 18px !important;
-        height: 18px !important;
-        margin-top: 0.25rem !important;
-        margin-right: 0.5rem !important;
-        display: inline-block !important;
-        visibility: visible !important;
+    /* 记住我复选框 */
+    .form-check {
+        display: flex;
+        align-items: center;
+        padding-left: 0;
     }
     
+    .form-check-input {
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: 0.75rem !important;
+        margin-top: 0 !important;
+        border: 2px solid #e9ecef;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .form-check-label {
+        color: #495057;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    /* 登录按钮 */
     .btn-auth {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
         height: 50px;
-        font-size: 16px;
+        font-size: 1rem;
         font-weight: 600;
         color: white;
         width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
     
-    /* 移动端优化 */
+    .btn-auth:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-auth:active {
+        transform: translateY(0);
+    }
+    
+    /* 链接样式 */
+    .auth-links {
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+    
+    .auth-links a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+    
+    .auth-links a:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+    
+    /* 错误提示 */
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .alert-danger {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border-left: 4px solid #dc3545;
+    }
+    
+    /* 响应式设计 */
     @media (max-width: 768px) {
-        .auth-container {
-            padding: 10px;
+        .login-wrapper {
+            padding: 1rem;
         }
         
-        .auth-card {
-            margin-top: 10px;
+        .card-body {
+            padding: 2rem 1.5rem;
+        }
+        
+        .auth-header {
+            padding: 2rem 1.5rem;
+        }
+        
+        .auth-header h3 {
+            font-size: 1.5rem;
+        }
+        
+        .auth-header-icon {
+            font-size: 2.5rem;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container auth-container">
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-8 col-lg-6">
-            <div class="auth-card card">
-                <div class="auth-header text-center">
-                    <h3 class="mb-1">学生登录</h3>
-                    <p class="mb-0 opacity-75">欢迎回来，继续你的求职之旅</p>
-                </div>
-                
-                <div class="card-body p-4 p-md-5">
-                    <form method="POST" action="{% url 'account_login' %}">
-                        {% csrf_token %}
-                        
-                        {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {% for error in form.non_field_errors %}
-                                {{ error }}
-                            {% endfor %}
+<div class="login-wrapper">
+    <div class="container login-content">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-header-content">
+                            <div class="auth-header-icon">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <h3>学生登录</h3>
+                            <p>欢迎回来，继续你的求职之旅</p>
                         </div>
-                        {% endif %}
-                        
-                        <!-- 邮箱地址 -->
-                        <div class="mb-3">
-                            <label for="id_login" class="form-label">邮箱地址</label>
-                            {{ form.login }}
-                            {% if form.login.errors %}
-                            <div class="text-danger small">{{ form.login.errors }}</div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <form method="POST" action="{% url 'account_login' %}">
+                            {% csrf_token %}
+                            
+                            {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                             {% endif %}
-                        </div>
-                        
-                        <!-- 密码 -->
-                        <div class="mb-3">
-                            <label for="id_password" class="form-label">密码</label>
-                            {{ form.password }}
-                            {% if form.password.errors %}
-                            <div class="text-danger small">{{ form.password.errors }}</div>
+                            
+                            <!-- 邮箱地址 -->
+                            <div class="mb-4">
+                                <label for="id_login" class="form-label">
+                                    <i class="bi bi-envelope me-2"></i>邮箱地址
+                                </label>
+                                {{ form.login }}
+                                {% if form.login.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle me-1"></i>{{ form.login.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 密码 -->
+                            <div class="mb-4">
+                                <label for="id_password" class="form-label">
+                                    <i class="bi bi-lock me-2"></i>密码
+                                </label>
+                                {{ form.password }}
+                                {% if form.password.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle me-1"></i>{{ form.password.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 记住我 -->
+                            <div class="mb-4 form-check">
+                                {{ form.remember }}
+                                <label class="form-check-label" for="id_remember">
+                                    记住我
+                                </label>
+                            </div>
+                            
+                            {% if redirect_field_value %}
+                            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
                             {% endif %}
-                        </div>
-                        
-                        <!-- 记住我 -->
-                        <div class="mb-3 form-check">
-                            {{ form.remember }}
-                            <label class="form-check-label" for="id_remember">
-                                记住我
-                            </label>
-                        </div>
-                        
-                        {% if redirect_field_value %}
-                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
-                        {% endif %}
-                        
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-auth">立即登录</button>
-                        </div>
-                        
-                        <div class="text-center mt-4">
-                            <p class="mb-2">
-                                <a href="{% url 'account_reset_password' %}" class="text-decoration-none">
-                                    忘记密码？
-                                </a>
-                            </p>
-                            <p class="mb-0">
-                                还没有账号？
-                                <a href="{% url 'account_signup' %}" class="text-decoration-none fw-bold">立即注册</a>
-                            </p>
-                        </div>
-                    </form>
+                            
+                            <div class="d-grid gap-2 mb-4">
+                                <button type="submit" class="btn btn-auth">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>立即登录
+                                </button>
+                            </div>
+                            
+                            <div class="auth-links">
+                                <p class="mb-2">
+                                    <a href="{% url 'account_reset_password' %}">
+                                        <i class="bi bi-question-circle me-1"></i>忘记密码？
+                                    </a>
+                                </p>
+                                <p class="mb-0">
+                                    还没有账号？
+                                    <a href="{% url 'account_signup' %}">
+                                        <i class="bi bi-person-plus me-1"></i>立即注册
+                                    </a>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -187,78 +371,43 @@
 </div>
 
 <script>
-    // 移动端表单优化 - 确保表单字段正确显示
-    // 使用最简单直接的方式，确保脚本执行
+    // 表单字段样式优化
     (function() {
         'use strict';
-        console.log('登录页面脚本开始执行');
-        
-        function setInputStyles(input, placeholder) {
-            if (!input) return;
-            input.classList.add('form-control', 'form-control-mobile');
-            if (placeholder) input.setAttribute('placeholder', placeholder);
-            input.style.display = 'block';
-            input.style.visibility = 'visible';
-            input.style.width = '100%';
-            input.style.minWidth = '200px';
-            input.style.height = '50px';
-            input.style.minHeight = '50px';
-            input.style.padding = '10px 15px';
-            input.style.fontSize = '16px';
-            input.style.color = '#212529';
-            input.style.backgroundColor = '#fff';
-            input.style.border = '2px solid #e9ecef';
-            input.style.borderRadius = '10px';
-            input.style.boxSizing = 'border-box';
-            input.style.margin = '0';
-            input.style.opacity = '1';
-            input.style.lineHeight = '1.5';
-        }
         
         function applyStyles() {
-            console.log('applyStyles 执行');
             const loginInput = document.getElementById('id_login');
             const passwordInput = document.getElementById('id_password');
             const rememberCheckbox = document.getElementById('id_remember');
             
             if (loginInput) {
-                setInputStyles(loginInput, '请输入邮箱地址');
-                console.log('邮箱输入框样式已设置，高度:', window.getComputedStyle(loginInput).height);
+                loginInput.classList.add('form-control');
+                loginInput.setAttribute('placeholder', '请输入邮箱地址');
             }
             
             if (passwordInput) {
-                setInputStyles(passwordInput, '请输入密码');
-                console.log('密码输入框样式已设置，高度:', window.getComputedStyle(passwordInput).height);
+                passwordInput.classList.add('form-control');
+                passwordInput.setAttribute('placeholder', '请输入密码');
             }
             
             if (rememberCheckbox) {
                 rememberCheckbox.classList.add('form-check-input');
-                rememberCheckbox.style.width = '18px';
-                rememberCheckbox.style.height = '18px';
             }
-            
-            console.log('登录页面表单字段初始化完成');
         }
         
         // 立即执行
         applyStyles();
         
-        // 延迟执行
-        setTimeout(applyStyles, 100);
-        setTimeout(applyStyles, 500);
-        setTimeout(applyStyles, 1000);
-        
         // DOM 加载完成后执行
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', applyStyles);
+        } else {
+            applyStyles();
         }
         
-        // 页面完全加载后执行
-        window.addEventListener('load', applyStyles);
+        // 延迟执行确保样式应用
+        setTimeout(applyStyles, 100);
+        setTimeout(applyStyles, 500);
     })();
 </script>
-{% endblock %}
-
-{% block extra_js %}
-<!-- 额外的 JavaScript 可以放在这里 -->
 {% endblock %}

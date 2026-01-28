@@ -103,8 +103,14 @@ class JobPage(Page):
         if not user.is_authenticated:
             return False
         return self.applications.filter(user=user, status='applied').exists()
-        
-template = "jobs/job_index_page.html"
+
+    class Meta:
+        verbose_name = "职位页面"
+        verbose_name_plural = "职位页面"
+
+    # 单个职位详情页使用 job_page.html 模板
+    template = "jobs/job_page.html"
+
 
 class JobIndexPage(Page):
     intro = RichTextField(blank=True, verbose_name="导语")
@@ -115,6 +121,13 @@ class JobIndexPage(Page):
     
     # 指定该页面下只能添加 JobPage 类型的子页面
     subpage_types = ['jobs.JobPage']
+    
+    class Meta:
+        verbose_name = "职位索引页面"
+        verbose_name_plural = "职位索引页面"
+    
+    # 职位列表页使用 job_index_page.html 模板
+    template = "jobs/job_index_page.html"
 
 
 class RecommendationsPage(Page):
