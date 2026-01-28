@@ -117,6 +117,106 @@ class JobIndexPage(Page):
     subpage_types = ['jobs.JobPage']
 
 
+class RecommendationsPage(Page):
+    """个性化推荐页面 - Wagtail页面模型"""
+    intro = RichTextField(blank=True, verbose_name="页面介绍", help_text="显示在推荐列表上方的介绍文字")
+    
+    content_panels = Page.content_panels + [
+        FieldPanel('intro'),
+    ]
+    
+    # 不允许添加子页面
+    subpage_types = []
+    
+    class Meta:
+        verbose_name = "个性化推荐页面"
+        verbose_name_plural = "个性化推荐页面"
+    
+    def get_context(self, request, *args, **kwargs):
+        """重写get_context方法，添加个性化推荐逻辑"""
+        context = super().get_context(request, *args, **kwargs)
+        
+        # 检查用户是否已登录
+        if not request.user.is_authenticated:
+            context['needs_login'] = True
+            return context
+        
+        user = request.user
+        
+        # 获取学生档案
+        try:
+            profile = user.student_profile
+        except StudentProfile.DoesNotExist:
+            context['needs_profile'] = True
+            return context
+        
+        # 基础查询：所有已发布的职位（直接使用JobPage模型）
+        from django.db.models import Q
+        all_jobs = JobPage.objects.live()
+        
+        # 规则1：按偏好职位类型筛选
+        preferred_types = profile.get_preferred_job_types_list()
+        if preferred_types:
+            type_jobs = all_jobs.filter(job_type__in=preferred_types)
+        else:
+            type_jobs = all_jobs
+        
+        # 规则2：按偏好地点筛选（简单文本匹配）
+        preferred_locations = [loc.strip() for loc in profile.preferred_locations.split(',') if loc.strip()]
+        location_jobs = type_jobs
+        if preferred_locations:
+            # 构建地点查询：多个地点OR条件
+            location_query = Q()
+            for location in preferred_locations:
+                location_query |= Q(location__icontains=location)
+            location_jobs = type_jobs.filter(location_query)
+        
+        # 规则3：按专业匹配（从职位描述中匹配专业关键词）
+        major_keywords = {
+            'cs': ['计算机', '软件', '编程', '算法', '后端', '前端', '开发'],
+            'se': ['软件工程', '测试', '运维', 'DevOps'],
+            'ee': ['电子', '硬件', '电路', '嵌入式'],
+            'business': ['商业', '市场', '营销', '管理'],
+            'finance': ['金融', '财务', '会计', '投资'],
+            'design': ['设计', 'UI', 'UX', '视觉', '平面']
+        }
+        
+        major_jobs = location_jobs
+        keywords = major_keywords.get(profile.major, [])
+        if keywords:
+            major_query = Q()
+            for keyword in keywords:
+                major_query |= Q(description__icontains=keyword) | Q(job_title__icontains=keyword)
+            major_jobs = location_jobs.filter(major_query)
+        
+        # 规则4：应届生优先（标记为接受应届生的职位）
+        # 需要先转换为列表才能进行文本搜索
+        major_jobs_list = list(major_jobs)
+        fresh_graduate_jobs = [job for job in major_jobs_list if '应届' in job.description or '毕业生' in job.description]
+        other_jobs = [job for job in major_jobs_list if job not in fresh_graduate_jobs]
+        
+        # 组合结果：应届生职位在前，其他在后
+        final_jobs = fresh_graduate_jobs + other_jobs
+        
+        # 去重并限制数量
+        seen_ids = set()
+        unique_jobs = []
+        for job in final_jobs:
+            if job.id not in seen_ids:
+                seen_ids.add(job.id)
+                unique_jobs.append(job)
+        
+        recommendations = unique_jobs[:20]  # 最多推荐20个
+        
+        # 添加到上下文
+        context['recommendations'] = recommendations
+        context['profile'] = profile
+        
+        return context
+    
+    template = "jobs/recommendations_page.html"
+
+
 class StudentProfile(models.Model):
     # 与Wagtail用户一对一关联
     user = models.OneToOneField(

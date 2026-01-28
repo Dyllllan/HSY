@@ -1,0 +1,31 @@
+{% load account %}
+{% if user.is_authenticated %}
+    <div class="navbar-nav ms-auto">
+        <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle"></i> {{ user.email|truncatechars:20 }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/accounts/profile/">
+                    <i class="bi bi-person"></i> 我的档案
+                </a></li>
+                <li><a class="dropdown-item" href="/accounts/dashboard/">
+                    <i class="bi bi-speedometer2"></i> 工作台
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'account_logout' %}">
+                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                </a></li>
+            </ul>
+        </div>
+    </div>
+{% else %}
+    <div class="navbar-nav ms-auto">
+        <a class="nav-link" href="{% url 'account_login' %}">
+            <i class="bi bi-box-arrow-in-right"></i> 登录
+        </a>
+        <a class="nav-link" href="{% url 'account_signup' %}">
+            <i class="bi bi-person-plus"></i> 注册
+        </a>
+    </div>
+{% endif %}

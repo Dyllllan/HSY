@@ -1,9 +1,13 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load static wagtailcore_tags job_filters %}
 
-{% block title %}为您推荐的职位{% endblock %}
+{% block title %}{{ page.title }} - 为您推荐的职位{% endblock %}
 
 {% block extra_css %}
+<!-- Bootstrap 5 CSS -->
+<link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
 <style>
     .recommendation-badge {
         position: absolute;
@@ -24,7 +28,7 @@
         line-height: 40px;
         text-align: center;
         border-radius: 50%;
-        background: #4CAF50;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         font-weight: bold;
         margin-right: 10px;
@@ -33,7 +37,8 @@
     .recommendation-reason {
         font-size: 0.85rem;
         color: #666;
-        background: #f8f9fa;
+        background: rgba(248, 249, 250, 0.8);
+        backdrop-filter: blur(10px);
         padding: 8px;
         border-radius: 8px;
         margin-top: 8px;
@@ -41,34 +46,82 @@
     
     .filter-chip {
         display: inline-block;
-        background: #e3f2fd;
+        background: rgba(227, 242, 253, 0.8);
+        backdrop-filter: blur(10px);
         color: #1976d2;
         padding: 4px 12px;
         border-radius: 20px;
         margin: 2px;
         font-size: 0.85rem;
     }
+    
+    .job-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .job-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid px-3">
+<div class="container-fluid px-3 py-4">
+    <!-- 页面标题和介绍 -->
+    <div class="page-header">
+        <h1 class="mb-3">
+            <i class="bi bi-stars text-primary me-2"></i>{{ page.title }}
+        </h1>
+        {% if page.intro %}
+        <div class="intro-text">
+            {{ page.intro|richtext }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- 需要登录提示 -->
+    {% if needs_login %}
+    <div class="alert alert-warning text-center">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        请先<a href="{% url 'account_login' %}?next={{ request.path }}">登录</a>以查看个性化推荐
+    </div>
+    {% elif needs_profile %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle me-2"></i>
+        请先完善您的<a href="/accounts/dashboard/">个人档案</a>以获取个性化推荐
+    </div>
+    {% else %}
+    
     <!-- 个性化推荐头部 -->
-    <div class="card bg-primary text-white mb-3" style="border-radius: 15px;">
+    <div class="card mb-4" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border: none; border-radius: 15px;">
         <div class="card-body">
             <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
-                    <i class="bi bi-stars display-4"></i>
+                    <i class="bi bi-stars display-4 text-primary"></i>
                 </div>
                 <div class="flex-grow-1 ms-3">
                     <h4 class="card-title">为您个性化推荐</h4>
                     <p class="card-text mb-2">
                         根据您的
                         {% for type in profile.get_preferred_job_types_list %}
-                        <span class="badge bg-light text-dark me-1">{{ type }}</span>
+                        <span class="badge bg-primary me-1">{{ type }}</span>
                         {% endfor %}
                         偏好和
-                        <span class="badge bg-light text-dark">{{ profile.get_school_display }}</span>
+                        <span class="badge bg-info">{{ profile.get_school_display }}</span>
                         背景匹配
                     </p>
                     <div>
@@ -140,10 +193,10 @@
                                     <i class="bi bi-globe"></i> {{ job.source_website }}
                                 </span>
                                 <div>
-                                    <a href="{% pageurl job %}" class="btn btn-sm btn-primary btn-touch">
+                                    <a href="{% pageurl job %}" class="btn btn-sm btn-primary">
                                         查看详情
                                     </a>
-                                    <button class="btn btn-sm btn-outline-secondary btn-touch save-job" data-job-id="{{ job.id }}">
+                                    <button class="btn btn-sm btn-outline-secondary save-job" data-job-id="{{ job.id }}">
                                         <i class="bi bi-bookmark"></i>
                                     </button>
                                 </div>
@@ -163,6 +216,7 @@
         </div>
         {% endfor %}
     </div>
+    {% endif %}
 </div>
 
 <script>
@@ -181,23 +235,11 @@
                 }
             });
         });
-        
-        // 发送推荐点击统计
-        document.querySelectorAll('.job-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const jobId = this.dataset.jobId;
-                if (jobId) {
-                    fetch('/api/track-recommendation-click/', {
-                        method: 'POST',
-                        headers: {'X-CSRFToken': '{{ csrf_token }}'},
-                        body: JSON.stringify({
-                            job_id: jobId,
-                            recommendation_type: 'personalized'
-                        })
-                    });
-                }
-            });
-        });
     });
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Bootstrap JS -->
+<script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

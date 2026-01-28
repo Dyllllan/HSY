@@ -66,13 +66,15 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = "optional"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_LOGOUT_ON_GET = True
+# 设置为 False 以显示退出登录确认页面（更安全）
+ACCOUNT_LOGOUT_ON_GET = False
 ACCOUNT_RATE_LIMITS = {
     'login_failed': '5/m',  # 5 attempts per minute
 }
 ACCOUNT_FORMS = {
     "signup": "jobs.forms.CustomSignupForm",
 }
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
 
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"

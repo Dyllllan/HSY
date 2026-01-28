@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block title %}{{ page.job_title }} - {{ page.company_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 py-4">
+    <!-- 返回按钮 -->
+    <div class="mb-3">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> 返回
+        </a>
+    </div>
+
+    <!-- 职位头部信息 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="flex-grow-1">
+                    <h1 class="h4 mb-2">{{ page.job_title }}</h1>
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-building"></i> {{ page.company_name }}
+                    </p>
+                </div>
+                <span class="badge {% if page.job_type == 'intern' %}bg-info{% elif page.job_type == 'fulltime' %}bg-success{% else %}bg-warning{% endif %} fs-6">
+                    {{ page.get_job_type_display }}
+                </span>
+            </div>
+
+            <!-- 关键信息 -->
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-cash-coin text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted d-block">薪资</small>
+                            <strong class="text-primary">{{ page.salary|default:"面议" }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-geo-alt text-primary me-2"></i>
+                        <div>
+                            <small class="text-muted d-block">地点</small>
+                            <strong>{{ page.location }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="d-flex gap-2 flex-wrap">
+                {% if user.is_authenticated %}
+                <button class="btn btn-primary btn-touch save-job-btn" data-job-id="{{ page.id }}">
+                    <i class="bi bi-bookmark"></i> 收藏职位
+                </button>
+                <button class="btn btn-success btn-touch apply-job-btn" data-job-id="{{ page.id }}">
+                    <i class="bi bi-send"></i> 立即申请
+                </button>
+                {% else %}
+                <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-primary btn-touch">
+                    <i class="bi bi-box-arrow-in-right"></i> 登录后申请
+                </a>
+                {% endif %}
+                {% if page.source_url %}
+                <a href="{{ page.source_url }}" target="_blank" class="btn btn-outline-secondary btn-touch">
+                    <i class="bi bi-box-arrow-up-right"></i> 查看原始链接
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 职位描述 -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-file-text"></i> 职位描述
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="job-description">
+                {{ page.description|richtext }}
+            </div>
+        </div>
+    </div>
+
+    <!-- 职位信息 -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-info-circle"></i> 职位信息
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-briefcase text-muted me-2"></i>
+                        <span class="text-muted me-2">职位类型：</span>
+                        <strong>{{ page.get_job_type_display }}</strong>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-globe text-muted me-2"></i>
+                        <span class="text-muted me-2">来源网站：</span>
+                        <strong>{{ page.source_website }}</strong>
+                    </div>
+                </div>
+                {% if page.source_url %}
+                <div class="col-12">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-link-45deg text-muted me-2"></i>
+                        <span class="text-muted me-2">原始链接：</span>
+                        <a href="{{ page.source_url }}" target="_blank" class="text-break">
+                            {{ page.source_url|truncatechars:50 }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 相关职位推荐（可选） -->
+    {% if page.get_siblings %}
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-grid"></i> 相关职位
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group list-group-flush">
+                {% for sibling in page.get_siblings.live|slice:":5" %}
+                {% if sibling.id != page.id %}
+                <a href="{% pageurl sibling %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ sibling.job_title }}</h6>
+                            <small class="text-muted">{{ sibling.company_name }} · {{ sibling.location }}</small>
+                        </div>
+                        <span class="badge {% if sibling.job_type == 'intern' %}bg-info{% elif sibling.job_type == 'fulltime' %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ sibling.get_job_type_display }}
+                        </span>
+                    </div>
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .job-description {
+        line-height: 1.8;
+    }
+    .job-description p {
+        margin-bottom: 1rem;
+    }
+    .job-description ul, .job-description ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .job-description li {
+        margin-bottom: 0.5rem;
+    }
+    .btn-touch {
+        min-height: 44px; /* 移动端触摸优化 */
+    }
+</style>
+
+<script>
+    // 收藏职位功能
+    const saveJobBtn = document.querySelector('.save-job-btn');
+    if (saveJobBtn) {
+        saveJobBtn.addEventListener('click', function() {
+            const jobId = this.dataset.jobId;
+            fetch('/api/save-job/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({job_id: jobId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.innerHTML = '<i class="bi bi-bookmark-fill"></i> 已收藏';
+                    this.classList.replace('btn-primary', 'btn-warning');
+                    this.disabled = true;
+                } else {
+                    alert(data.message || '操作失败，请重试');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('网络错误，请重试');
+            });
+        });
+    }
+
+    // 申请职位功能
+    const applyJobBtn = document.querySelector('.apply-job-btn');
+    if (applyJobBtn) {
+        applyJobBtn.addEventListener('click', function() {
+            const jobId = this.dataset.jobId;
+            fetch('/api/apply-job/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({job_id: jobId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.innerHTML = '<i class="bi bi-check-circle"></i> 已申请';
+                    this.classList.replace('btn-success', 'btn-secondary');
+                    this.disabled = true;
+                    alert('申请成功！');
+                } else {
+                    alert(data.message || '操作失败，请重试');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('网络错误，请重试');
+            });
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "jobs/base.html" %}
+{% load static %}
+
+{% block title %}退出登录 - 学生求职{% endblock %}
+
+{% block extra_css %}
+<style>
+    .logout-container {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 20px;
+    }
+    
+    .logout-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .logout-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 30px 20px;
+        text-align: center;
+    }
+    
+    .logout-body {
+        padding: 40px;
+        text-align: center;
+    }
+    
+    .btn-logout {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        height: 50px;
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        min-width: 150px;
+        margin: 0 10px;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        border: none;
+        border-radius: 10px;
+        height: 50px;
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        min-width: 150px;
+        margin: 0 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logout-container">
+    <div class="logout-card card">
+        <div class="logout-header">
+            <h3 class="mb-0">
+                <i class="bi bi-box-arrow-right"></i> 退出登录
+            </h3>
+        </div>
+        <div class="logout-body">
+            <div class="mb-4">
+                <i class="bi bi-question-circle display-1 text-primary"></i>
+            </div>
+            <h4 class="mb-3">确定要退出登录吗？</h4>
+            <p class="text-muted mb-4">
+                退出后需要重新登录才能访问个人功能
+            </p>
+            <form method="POST" action="{% url 'account_logout' %}">
+                {% csrf_token %}
+                {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                {% endif %}
+                <div class="d-flex justify-content-center flex-wrap gap-2">
+                    <button type="submit" class="btn btn-logout">
+                        <i class="bi bi-check-circle"></i> 确认退出
+                    </button>
+                    <a href="{% url 'account_logout' %}" class="btn btn-cancel">
+                        <i class="bi bi-x-circle"></i> 取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

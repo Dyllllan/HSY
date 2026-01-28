@@ -1,184 +1,622 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load wagtailcore_tags static %}
 
-{% block title %}学生职位推荐 - {{ page.title }}{% endblock %}
+{% block title %}职位浏览 - {{ page.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Jobs 页面样式 */
+    .jobs-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        padding: 2rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .jobs-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(255, 107, 157, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(79, 172, 254, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(240, 147, 251, 0.1) 0%, transparent 50%);
+        animation: lightMove 25s ease infinite;
+        z-index: 0;
+    }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes lightMove {
+        0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+        25% { background-position: 100% 0%, 0% 100%, 0% 0%; }
+        50% { background-position: 100% 100%, 0% 0%, 100% 100%; }
+        75% { background-position: 0% 100%, 100% 0%, 50% 0%; }
+    }
+    
+    .jobs-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* 页面头部 */
+    .jobs-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .jobs-header h1 {
+        color: #2d3748;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .jobs-header p {
+        color: #718096;
+        margin: 0;
+    }
+    
+    /* 筛选栏 */
+    .filter-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        position: sticky;
+        top: 70px;
+        z-index: 100;
+    }
+    
+    .filter-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .filter-tab {
+        padding: 0.5rem 1.25rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .filter-tab.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .filter-tab:not(.active) {
+        background: rgba(255, 255, 255, 0.8);
+        color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .filter-tab:not(.active):hover {
+        background: rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .search-box {
+        position: relative;
+    }
+    
+    .search-box .form-control {
+        border-radius: 25px;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        background: rgba(255, 255, 255, 0.9);
+        transition: all 0.3s ease;
+    }
+    
+    .search-box .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+    }
+    
+    .search-box .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #667eea;
+        z-index: 10;
+    }
+    
+    .search-box .clear-btn {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+    
+    /* 职位卡片 */
+    .job-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .job-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    
+    .job-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .job-card-title {
+        flex: 1;
+    }
+    
+    .job-card-title h5 {
+        color: #2d3748;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .job-card-title .company {
+        color: #718096;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .job-type-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    
+    .job-type-badge.intern {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    
+    .job-type-badge.fulltime {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+    }
+    
+    .job-type-badge.parttime {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+    }
+    
+    .job-card-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem 0;
+        border-top: 1px solid rgba(0,0,0,0.05);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .job-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+    
+    .job-info-item i {
+        color: #667eea;
+    }
+    
+    .job-info-item.salary {
+        color: #667eea;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .job-card-description {
+        color: #718096;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .job-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .job-source {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #718096;
+        font-size: 0.85rem;
+    }
+    
+    .job-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    /* 空状态 */
+    .empty-state {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 4rem 2rem;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .empty-state i {
+        font-size: 5rem;
+        color: #cbd5e0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-state h4 {
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+        color: #718096;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* 分页 */
+    .pagination-wrapper {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .pagination {
+        justify-content: center;
+        margin: 0;
+    }
+    
+    .page-link {
+        border-radius: 10px;
+        margin: 0 0.25rem;
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        color: #667eea;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .page-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+    
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: transparent;
+        color: white;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .jobs-wrapper {
+            padding: 1rem 0;
+        }
+        
+        .jobs-header,
+        .filter-bar {
+            padding: 1.25rem;
+            border-radius: 15px;
+        }
+        
+        .filter-bar {
+            top: 60px;
+        }
+        
+        .job-card {
+            padding: 1.25rem;
+        }
+        
+        .job-card-info {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .job-card-footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .job-actions {
+            width: 100%;
+        }
+        
+        .job-actions .btn {
+            flex: 1;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-3">
-    <!-- 顶部筛选栏 -->
-    <div class="sticky-top bg-white pt-2" style="top: 56px; z-index: 999;">
-        <div class="row g-2 mb-3">
+<div class="jobs-wrapper">
+    <div class="container jobs-content">
+        <!-- 页面头部 -->
+        <div class="jobs-header">
+            <h1>
+                <i class="bi bi-briefcase me-2"></i>{{ page.title }}
+            </h1>
+            {% if page.intro %}
+            <p>{{ page.intro|richtext }}</p>
+            {% else %}
+            <p>发现适合您的理想职位</p>
+            {% endif %}
+        </div>
+        
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
             <!-- 分类筛选 -->
-            <div class="col-12">
-                <div class="scrollable-tabs">
-                    <div class="d-flex flex-nowrap overflow-auto pb-1" style="-webkit-overflow-scrolling: touch;">
-                        <a href="?job_type=" 
-                           class="btn btn-sm {% if not request.GET.job_type %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 flex-shrink-0">
-                            全部
-                        </a>
-                        {% for type_key, type_name in job_types %}
-                        <a href="?job_type={{ type_key }}" 
-                           class="btn btn-sm {% if request.GET.job_type == type_key %}btn-primary{% else %}btn-outline-primary{% endif %} me-2 flex-shrink-0">
-                            {{ type_name }}
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
+            <div class="filter-tabs">
+                <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}" 
+                   class="filter-tab {% if not request.GET.job_type %}active{% endif %}">
+                    全部
+                </a>
+                {% for type_key, type_name in job_types %}
+                <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}job_type={{ type_key }}" 
+                   class="filter-tab {% if request.GET.job_type == type_key %}active{% endif %}">
+                    {{ type_name }}
+                </a>
+                {% endfor %}
             </div>
             
             <!-- 搜索框 -->
-            <div class="col-12">
-                <form method="get" class="position-relative">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" 
-                               name="q" 
-                               class="form-control border-start-0" 
-                               placeholder="搜索职位、公司..." 
-                               value="{{ request.GET.q }}"
-                               style="border-radius: 0 25px 25px 0;">
-                        {% if request.GET.q %}
-                        <a href="?" class="btn btn-outline-secondary" style="border-radius: 25px;">
-                            <i class="bi bi-x"></i>
-                        </a>
-                        {% endif %}
-                    </div>
-                </form>
-            </div>
+            <form method="get" class="search-box">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" 
+                       name="q" 
+                       class="form-control" 
+                       placeholder="搜索职位、公司名称..." 
+                       value="{{ request.GET.q }}">
+                {% if request.GET.job_type %}
+                <input type="hidden" name="job_type" value="{{ request.GET.job_type }}">
+                {% endif %}
+                {% if request.GET.q %}
+                <a href="?{% if request.GET.job_type %}job_type={{ request.GET.job_type }}{% endif %}" 
+                   class="btn btn-sm btn-outline-secondary clear-btn">
+                    <i class="bi bi-x"></i>
+                </a>
+                {% endif %}
+            </form>
         </div>
-    </div>
-    
-    <!-- 职位列表 -->
-    <div id="job-list">
-        {% for job in job_pages %}
-        <div class="job-card card" data-job-id="{{ job.id }}">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h5 class="card-title mb-1">{{ job.job_title }}</h5>
-                        <p class="card-text text-muted small mb-1">
-                            <i class="bi bi-building"></i> {{ job.company_name }}
-                        </p>
+        
+        <!-- 职位列表 -->
+        <div id="job-list">
+            {% for job in job_pages %}
+            <div class="job-card" data-job-id="{{ job.id }}">
+                <div class="job-card-header">
+                    <div class="job-card-title">
+                        <h5>{{ job.job_title }}</h5>
+                        <div class="company">
+                            <i class="bi bi-building"></i>
+                            {{ job.company_name }}
+                        </div>
                     </div>
-                    <span class="badge {% if job.job_type == 'intern' %}bg-info{% elif job.job_type == 'fulltime' %}bg-success{% else %}bg-warning{% endif %}">
+                    <span class="job-type-badge {{ job.job_type }}">
                         {{ job.get_job_type_display }}
                     </span>
                 </div>
                 
-                <div class="row g-2 mb-2">
-                    <div class="col-6">
-                        <span class="text-primary fw-bold">{{ job.salary|default:"面议" }}</span>
+                <div class="job-card-info">
+                    <div class="job-info-item salary">
+                        <i class="bi bi-cash-stack"></i>
+                        {{ job.salary|default:"面议" }}
                     </div>
-                    <div class="col-6 text-end">
-                        <span class="text-muted small">
-                            <i class="bi bi-geo-alt"></i> {{ job.location }}
-                        </span>
+                    <div class="job-info-item">
+                        <i class="bi bi-geo-alt"></i>
+                        {{ job.location }}
+                    </div>
+                    <div class="job-info-item">
+                        <i class="bi bi-globe"></i>
+                        {{ job.source_website }}
                     </div>
                 </div>
                 
-                <!-- 职位描述摘要 -->
-                <p class="card-text small text-secondary mb-3 line-clamp-2">
-                    {{ job.description|striptags|truncatechars:80 }}
-                </p>
+                <div class="job-card-description">
+                    {{ job.description|striptags|truncatechars:120 }}
+                </div>
                 
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="badge bg-light text-dark">
-                        <i class="bi bi-globe"></i> {{ job.source_website }}
-                    </span>
-                    <div>
-                        <a href="{% pageurl job %}" class="btn btn-sm btn-outline-primary btn-touch">
-                            查看详情
+                <div class="job-card-footer">
+                    <div class="job-source">
+                        <i class="bi bi-info-circle"></i>
+                        <span>来源：{{ job.source_website }}</span>
+                    </div>
+                    <div class="job-actions">
+                        <a href="{% pageurl job %}" class="btn btn-primary">
+                            <i class="bi bi-eye me-1"></i>查看详情
                         </a>
                         {% if user.is_authenticated %}
-                        <button class="btn btn-sm btn-outline-secondary btn-touch save-job" data-job-id="{{ job.id }}">
+                        <button class="btn btn-outline-secondary save-job" data-job-id="{{ job.id }}" title="收藏职位">
                             <i class="bi bi-bookmark"></i>
                         </button>
                         {% endif %}
                     </div>
                 </div>
             </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h4>暂无相关职位</h4>
+                <p>试试调整筛选条件或搜索关键词</p>
+                <a href="/" class="btn btn-primary">
+                    <i class="bi bi-house me-1"></i>返回首页
+                </a>
+            </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <div class="text-center py-5">
-            <i class="bi bi-inbox display-1 text-muted"></i>
-            <p class="text-muted mt-3">暂无相关职位</p>
-            <a href="/" class="btn btn-primary">返回首页</a>
+        
+        <!-- 分页 -->
+        {% if job_pages.paginator.num_pages > 1 %}
+        <div class="pagination-wrapper">
+            <nav aria-label="职位分页">
+                <ul class="pagination">
+                    {% if job_pages.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ job_pages.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-left"></i> 上一页
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            第 {{ job_pages.number }} 页 / 共 {{ job_pages.paginator.num_pages }} 页
+                        </span>
+                    </li>
+                    
+                    {% if job_pages.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ job_pages.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            下一页 <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
-        {% endfor %}
+        {% endif %}
     </div>
-    
-    <!-- 分页（移动端优化） -->
-    {% if job_pages.paginator.num_pages > 1 %}
-    <nav aria-label="职位分页" class="my-4">
-        <ul class="pagination justify-content-center">
-            {% if job_pages.has_previous %}
-            <li class="page-item">
-                <a class="page-link btn-touch" href="?page={{ job_pages.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                    <i class="bi bi-chevron-left"></i>
-                </a>
-            </li>
-            {% endif %}
-            
-            <li class="page-item active">
-                <span class="page-link">{{ job_pages.number }} / {{ job_pages.paginator.num_pages }}</span>
-            </li>
-            
-            {% if job_pages.has_next %}
-            <li class="page-item">
-                <a class="page-link btn-touch" href="?page={{ job_pages.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                    <i class="bi bi-chevron-right"></i>
-                </a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
 </div>
-
-<style>
-    .scrollable-tabs::-webkit-scrollbar { display: none; }
-    .line-clamp-2 {
-        display: -webkit-box;
-        line-clamp: 2;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-</style>
 
 <script>
     // 收藏职位功能
     document.querySelectorAll('.save-job').forEach(button => {
         button.addEventListener('click', function() {
             const jobId = this.dataset.jobId;
-            fetch('/api/save-job/', {
+            const icon = this.querySelector('i');
+            
+            fetch('/api/toggle-save-job/', {
                 method: 'POST',
-                headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({job_id: jobId})
             })
-            .then(response => {
-                if(response.ok) {
-                    this.innerHTML = '<i class="bi bi-bookmark-fill"></i>';
-                    this.classList.replace('btn-outline-secondary', 'btn-warning');
+            .then(response => response.json())
+            .then(data => {
+                if (data.action === 'saved') {
+                    icon.classList.remove('bi-bookmark');
+                    icon.classList.add('bi-bookmark-fill');
+                    this.classList.remove('btn-outline-secondary');
+                    this.classList.add('btn-warning');
+                    showToast('已收藏');
+                } else if (data.action === 'unsaved') {
+                    icon.classList.remove('bi-bookmark-fill');
+                    icon.classList.add('bi-bookmark');
+                    this.classList.remove('btn-warning');
+                    this.classList.add('btn-outline-secondary');
+                    showToast('已取消收藏');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('操作失败，请稍后重试', 'error');
             });
         });
     });
     
-    // 下拉刷新（移动端）
-    let startY;
-    document.getElementById('job-list').addEventListener('touchstart', e => {
-        startY = e.touches[0].clientY;
+    // 搜索框自动提交
+    let searchTimeout;
+    document.querySelector('.search-box input[name="q"]').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        // 可以添加自动搜索功能，这里暂时保留手动提交
     });
     
-    document.getElementById('job-list').addEventListener('touchmove', e => {
-        const currentY = e.touches[0].clientY;
-        if (window.scrollY === 0 && currentY > startY) {
-            // 触发刷新
-            window.location.reload();
-        }
-    });
+    // 显示提示消息
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed bottom-0 end-0 p-3';
+        toast.style.zIndex = '9999';
+        const bgColor = type === 'success' ? 'bg-success' : 'bg-danger';
+        toast.innerHTML = `
+            <div class="toast show" role="alert">
+                <div class="toast-body ${bgColor} text-white">
+                    ${message}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    // 下拉刷新（移动端）
+    let startY = 0;
+    const jobList = document.getElementById('job-list');
+    
+    if (jobList) {
+        jobList.addEventListener('touchstart', e => {
+            startY = e.touches[0].clientY;
+        });
+        
+        jobList.addEventListener('touchmove', e => {
+            const currentY = e.touches[0].clientY;
+            if (window.scrollY === 0 && currentY > startY + 50) {
+                window.location.reload();
+            }
+        });
+    }
 </script>
 {% endblock %}

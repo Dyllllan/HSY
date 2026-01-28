@@ -1,8 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.contrib import messages
 from wagtail.models import Page
-from .models import JobPage, StudentProfile
+from .models import JobPage, StudentProfile, JobApplication
+from .forms import CustomSignupForm
 
 @login_required
 def personalized_recommendations(request):
@@ -74,6 +76,64 @@ def personalized_recommendations(request):
     
     return render(request, 'jobs/recommendations.html', {
         'recommendations': recommendations,
+        'profile': profile,
+    })
+
+
+@login_required
+def dashboard(request):
+    """用户工作台/个人档案页面"""
+    user = request.user
+    
+    # 获取或创建学生档案
+    profile, created = StudentProfile.objects.get_or_create(user=user)
+    
+    # 获取用户的职位申请记录
+    user_applications = JobApplication.objects.filter(user=user)
+    
+    # 统计信息
+    saved_count = user_applications.filter(status='saved').count()
+    applied_count = user_applications.filter(status='applied').count()
+    
+    # 计算匹配度（简单算法：基于收藏和申请的比例）
+    total_jobs = Page.objects.type(JobPage).live().count()
+    match_rate = min(100, int((saved_count + applied_count) / max(1, total_jobs) * 100)) if total_jobs > 0 else 0
+    
+    # 获取收藏和申请的记录
+    saved_applications = user_applications.filter(status='saved').select_related('job_page')[:10]
+    applied_applications = user_applications.filter(status='applied').select_related('job_page')[:10]
+    
+    return render(request, 'account/dashboard.html', {
+        'profile': profile,
+        'saved_count': saved_count,
+        'applied_count': applied_count,
+        'match_rate': match_rate,
+        'saved_applications': saved_applications,
+        'applied_applications': applied_applications,
+    })
+
+
+@login_required
+def edit_profile(request):
+    """编辑个人档案页面"""
+    from .forms import ProfileEditForm
+    
+    user = request.user
+    
+    # 获取或创建学生档案
+    profile, created = StudentProfile.objects.get_or_create(user=user)
+    
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, request.FILES, instance=profile, user=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '个人档案已更新！')
+            return redirect('dashboard')
+    else:
+        form = ProfileEditForm(instance=profile, user=user)
+    
+    return render(request, 'jobs/account/edit_profile.html', {
+        'form': form,
         'profile': profile,
     })
 # Create your views here.

@@ -4,18 +4,164 @@
 {% block body_class %}template-homepage{% endblock %}
 
 {% block extra_css %}
-
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+<!-- Bootstrap 5 CSS -->
+<link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<!-- 首页自定义样式 -->
+<link rel="stylesheet" href="{% static 'css/homepage.css' %}">
+<style>
+    /* 确保整个页面背景都是彩色 */
+    body.template-homepage {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        min-height: 100vh;
+    }
+    
+    @keyframes gradientShift {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+</style>
 {% endblock extra_css %}
 
 {% block content %}
+<div class="homepage-hero">
+    <div class="hero-background">
+        <!-- 彩色装饰元素 -->
+        <div class="color-orb orb-1"></div>
+        <div class="color-orb orb-2"></div>
+        <div class="color-orb orb-3"></div>
+        <div class="color-orb orb-4"></div>
+        <div class="color-orb orb-5"></div>
+    </div>
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6 text-center text-lg-start">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="gradient-text">大学生工作信息</span><br>
+                        推荐平台
+                    </h1>
+                    <p class="hero-subtitle">
+                        为大学生量身定制的求职推荐系统<br>
+                        智能匹配，精准推荐，助你找到理想工作
+                    </p>
+                    <div class="hero-buttons">
+                        {% if user.is_authenticated %}
+                            <a href="/recommendations/" class="btn btn-primary btn-lg btn-hero">
+                                <i class="bi bi-stars me-2"></i>查看推荐
+                            </a>
+                            <a href="/jobs/" class="btn btn-outline-light btn-lg btn-hero">
+                                <i class="bi bi-search me-2"></i>浏览职位
+                            </a>
+                        {% else %}
+                            <a href="{% url 'account_login' %}?next=/recommendations/" class="btn btn-primary btn-lg btn-hero">
+                                <i class="bi bi-stars me-2"></i>查看推荐
+                            </a>
+                            <a href="{% url 'account_login' %}?next=/jobs/" class="btn btn-outline-light btn-lg btn-hero">
+                                <i class="bi bi-search me-2"></i>浏览职位
+                            </a>
+                            <a href="{% url 'account_signup' %}" class="btn btn-outline-light btn-lg btn-hero">
+                                <i class="bi bi-person-plus me-2"></i>立即注册
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="hero-image">
+                    <div class="floating-card card-1">
+                        <i class="bi bi-briefcase"></i>
+                        <p>职位推荐</p>
+                    </div>
+                    <div class="floating-card card-2">
+                        <i class="bi bi-graph-up"></i>
+                        <p>智能匹配</p>
+                    </div>
+                    <div class="floating-card card-3">
+                        <i class="bi bi-heart"></i>
+                        <p>个性化</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-{% include 'home/welcome_page.html' %}
+<!-- 功能特色区域 -->
+<div class="features-section">
+    <div class="container py-5">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="section-title">为什么选择我们</h2>
+                <p class="section-subtitle">专业的求职推荐服务，助力你的职业发展</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                    <h3>快速匹配</h3>
+                    <p>基于你的专业、兴趣和偏好，快速为你推荐合适的职位</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <h3>个性化推荐</h3>
+                    <p>智能算法分析你的简历和偏好，提供精准的个性化推荐</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h3>安全可靠</h3>
+                    <p>保护你的个人信息安全，提供可靠的求职服务</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- 底部CTA区域 -->
+{% if not user.is_authenticated %}
+<div class="cta-section">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="cta-title">准备好开始你的求职之旅了吗？</h2>
+                <p class="cta-subtitle">立即注册，获取专属职位推荐</p>
+                <div class="cta-buttons">
+                    <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg me-3">
+                        <i class="bi bi-person-plus me-2"></i>免费注册
+                    </a>
+                    <a href="{% url 'account_login' %}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>已有账号？登录
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock content %}
+
+{% block extra_js %}
+<!-- Bootstrap JS -->
+<script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+{% endblock extra_js %}

@@ -1,0 +1,264 @@
+{% extends "jobs/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* 移动端注册登录样式 */
+    .auth-container {
+        max-width: 100%;
+        padding: 20px;
+    }
+    
+    .auth-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-top: 30px;
+    }
+    
+    .auth-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 30px 20px;
+    }
+    
+    .form-control-mobile {
+        height: 50px;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 10px 15px;
+        font-size: 16px;
+    }
+    
+    .form-control-mobile:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* 确保表单字段即使没有样式类也能显示 - 使用 !important 确保优先级 */
+    /* 使用更具体的选择器确保优先级 */
+    form input#id_login,
+    form input#id_password,
+    .card-body input#id_login,
+    .card-body input#id_password,
+    input[name="login"],
+    input[name="password"],
+    input[type="email"][name="login"],
+    input[type="password"][name="password"] {
+        display: block !important;
+        visibility: visible !important;
+        width: 100% !important;
+        min-width: 200px !important;
+        height: 50px !important;
+        min-height: 50px !important;
+        max-height: none !important;
+        padding: 10px 15px !important;
+        font-size: 16px !important;
+        line-height: 1.5 !important;
+        color: #212529 !important;
+        background-color: #fff !important;
+        background-image: none !important;
+        border: 2px solid #e9ecef !important;
+        border-radius: 10px !important;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 1 !important;
+        overflow: visible !important;
+    }
+    
+    #id_login:focus, #id_password:focus,
+    input[name="login"]:focus, input[name="password"]:focus {
+        border-color: #667eea !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+    
+    #id_remember,
+    input[name="remember"],
+    input[type="checkbox"] {
+        width: 18px !important;
+        height: 18px !important;
+        margin-top: 0.25rem !important;
+        margin-right: 0.5rem !important;
+        display: inline-block !important;
+        visibility: visible !important;
+    }
+    
+    .btn-auth {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        height: 50px;
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        width: 100%;
+    }
+    
+    /* 移动端优化 */
+    @media (max-width: 768px) {
+        .auth-container {
+            padding: 10px;
+        }
+        
+        .auth-card {
+            margin-top: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container auth-container">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="auth-card card">
+                <div class="auth-header text-center">
+                    <h3 class="mb-1">学生登录</h3>
+                    <p class="mb-0 opacity-75">欢迎回来，继续你的求职之旅</p>
+                </div>
+                
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="{% url 'account_login' %}">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 邮箱地址 -->
+                        <div class="mb-3">
+                            <label for="id_login" class="form-label">邮箱地址</label>
+                            {{ form.login }}
+                            {% if form.login.errors %}
+                            <div class="text-danger small">{{ form.login.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 密码 -->
+                        <div class="mb-3">
+                            <label for="id_password" class="form-label">密码</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                            <div class="text-danger small">{{ form.password.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 记住我 -->
+                        <div class="mb-3 form-check">
+                            {{ form.remember }}
+                            <label class="form-check-label" for="id_remember">
+                                记住我
+                            </label>
+                        </div>
+                        
+                        {% if redirect_field_value %}
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-auth">立即登录</button>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <p class="mb-2">
+                                <a href="{% url 'account_reset_password' %}" class="text-decoration-none">
+                                    忘记密码？
+                                </a>
+                            </p>
+                            <p class="mb-0">
+                                还没有账号？
+                                <a href="{% url 'account_signup' %}" class="text-decoration-none fw-bold">立即注册</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 移动端表单优化 - 确保表单字段正确显示
+    // 使用最简单直接的方式，确保脚本执行
+    (function() {
+        'use strict';
+        console.log('登录页面脚本开始执行');
+        
+        function setInputStyles(input, placeholder) {
+            if (!input) return;
+            input.classList.add('form-control', 'form-control-mobile');
+            if (placeholder) input.setAttribute('placeholder', placeholder);
+            input.style.display = 'block';
+            input.style.visibility = 'visible';
+            input.style.width = '100%';
+            input.style.minWidth = '200px';
+            input.style.height = '50px';
+            input.style.minHeight = '50px';
+            input.style.padding = '10px 15px';
+            input.style.fontSize = '16px';
+            input.style.color = '#212529';
+            input.style.backgroundColor = '#fff';
+            input.style.border = '2px solid #e9ecef';
+            input.style.borderRadius = '10px';
+            input.style.boxSizing = 'border-box';
+            input.style.margin = '0';
+            input.style.opacity = '1';
+            input.style.lineHeight = '1.5';
+        }
+        
+        function applyStyles() {
+            console.log('applyStyles 执行');
+            const loginInput = document.getElementById('id_login');
+            const passwordInput = document.getElementById('id_password');
+            const rememberCheckbox = document.getElementById('id_remember');
+            
+            if (loginInput) {
+                setInputStyles(loginInput, '请输入邮箱地址');
+                console.log('邮箱输入框样式已设置，高度:', window.getComputedStyle(loginInput).height);
+            }
+            
+            if (passwordInput) {
+                setInputStyles(passwordInput, '请输入密码');
+                console.log('密码输入框样式已设置，高度:', window.getComputedStyle(passwordInput).height);
+            }
+            
+            if (rememberCheckbox) {
+                rememberCheckbox.classList.add('form-check-input');
+                rememberCheckbox.style.width = '18px';
+                rememberCheckbox.style.height = '18px';
+            }
+            
+            console.log('登录页面表单字段初始化完成');
+        }
+        
+        // 立即执行
+        applyStyles();
+        
+        // 延迟执行
+        setTimeout(applyStyles, 100);
+        setTimeout(applyStyles, 500);
+        setTimeout(applyStyles, 1000);
+        
+        // DOM 加载完成后执行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyStyles);
+        }
+        
+        // 页面完全加载后执行
+        window.addEventListener('load', applyStyles);
+    })();
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- 额外的 JavaScript 可以放在这里 -->
+{% endblock %}

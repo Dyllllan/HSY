@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}编辑个人档案 - 学生求职{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .form-section h4 {
+        color: #667eea;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 py-4">
+    <div class="profile-form-container">
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border: none; border-radius: 15px;">
+            <div class="card-body text-center">
+                <h2 class="mb-2">
+                    <i class="bi bi-person-gear me-2"></i>编辑个人档案
+                </h2>
+                <p class="text-muted mb-0">完善您的信息，获取更精准的职位推荐</p>
+            </div>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- 基本信息 -->
+            <div class="form-section">
+                <h4><i class="bi bi-person me-2"></i>基本信息</h4>
+                
+                <div class="mb-3">
+                    <label for="{{ form.full_name.id_for_label }}" class="form-label">{{ form.full_name.label }}</label>
+                    {{ form.full_name }}
+                    {% if form.full_name.errors %}
+                    <div class="text-danger small">{{ form.full_name.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <div class="text-danger small">{{ form.email.errors }}</div>
+                    {% endif %}
+                    <div class="form-text">邮箱地址用于登录和接收通知</div>
+                </div>
+            </div>
+            
+            <!-- 学生信息 -->
+            <div class="form-section">
+                <h4><i class="bi bi-mortarboard me-2"></i>学生信息</h4>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.school.id_for_label }}" class="form-label">{{ form.school.label }}</label>
+                        {{ form.school }}
+                        {% if form.school.errors %}
+                        <div class="text-danger small">{{ form.school.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.major.id_for_label }}" class="form-label">{{ form.major.label }}</label>
+                        {{ form.major }}
+                        {% if form.major.errors %}
+                        <div class="text-danger small">{{ form.major.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.graduation_year.id_for_label }}" class="form-label">{{ form.graduation_year.label }}</label>
+                    {{ form.graduation_year }}
+                    {% if form.graduation_year.errors %}
+                    <div class="text-danger small">{{ form.graduation_year.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 求职偏好 -->
+            <div class="form-section">
+                <h4><i class="bi bi-briefcase me-2"></i>求职偏好</h4>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ form.preferred_job_types.label }}</label>
+                    <div class="border rounded p-3">
+                        {{ form.preferred_job_types }}
+                    </div>
+                    {% if form.preferred_job_types.errors %}
+                    <div class="text-danger small">{{ form.preferred_job_types.errors }}</div>
+                    {% endif %}
+                    <div class="form-text">可选择多个类型</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.preferred_locations.id_for_label }}" class="form-label">{{ form.preferred_locations.label }}</label>
+                    {{ form.preferred_locations }}
+                    {% if form.preferred_locations.errors %}
+                    <div class="text-danger small">{{ form.preferred_locations.errors }}</div>
+                    {% endif %}
+                    <div class="form-text">多个城市用逗号分隔，如：北京,上海,深圳</div>
+                </div>
+            </div>
+            
+            
+            <!-- 提交按钮 -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary me-md-2">取消</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>保存更改
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // 为表单字段添加样式类
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('input[type="text"], input[type="email"], select');
+        inputs.forEach(input => {
+            input.classList.add('form-control');
+        });
+        
+        // 处理多选框样式
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.classList.add('form-check-input');
+            const label = checkbox.nextElementSibling;
+            if (label && label.tagName === 'LABEL') {
+                label.classList.add('form-check-label');
+                checkbox.parentElement.classList.add('form-check');
+            }
+        });
+    });
+</script>
+{% endblock %}
