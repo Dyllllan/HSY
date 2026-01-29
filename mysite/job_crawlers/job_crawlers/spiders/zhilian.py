@@ -32,10 +32,8 @@ class ZhilianSpider(scrapy.Spider):
     }
     
     def start_requests(self):
-        """开始请求，使用智联招聘的搜索页面"""
-        # 默认搜索关键词和城市
         keywords = ['Python', 'Java', '前端', '后端', '算法']
-        city = '北京'  # 默认城市
+        city = '广州'  
         
         for keyword in keywords:
             # 使用智联招聘的搜索URL
@@ -56,11 +54,6 @@ class ZhilianSpider(scrapy.Spider):
             )
     
     def parse_list(self, response):
-        """解析职位列表页面"""
-        self.logger.info(f"正在解析列表页: {response.url}")
-        
-        # 尝试多种方式提取职位链接
-        # 方式1: 查找职位详情页链接（通常在class包含job或position的元素中）
         job_links = response.css('a[href*="/job_detail/"]::attr(href)').getall()
         
         # 方式2: 查找包含职位ID的链接
@@ -76,7 +69,8 @@ class ZhilianSpider(scrapy.Spider):
             for job_id in job_ids:
                 job_links.append(f'https://www.zhaopin.com/job_detail/{job_id}.html')
         
-        self.logger.info(f"找到 {len(job_links)} 个职位链接")
+        if job_links:
+            self.logger.debug(f"找到 {len(job_links)} 个职位链接")
         
         for link in job_links:
             # 确保链接是完整的URL
@@ -122,17 +116,11 @@ class ZhilianSpider(scrapy.Spider):
     @defer.inlineCallbacks
     def parse_detail(self, response):
         """解析职位详情页面"""
-        self.logger.info(f"正在解析职位详情: {response.url}")
-        
         source_url = response.meta.get('source_url', response.url)
         
         # 检查响应状态和内容类型
-        self.logger.debug(f"响应状态码: {response.status}")
         content_type = response.headers.get('Content-Type', b'').decode('utf-8', errors='ignore')
         content_encoding = response.headers.get('Content-Encoding', b'').decode('utf-8', errors='ignore')
-        self.logger.debug(f"响应头 Content-Type: {content_type}")
-        self.logger.debug(f"响应头 Content-Encoding: {content_encoding}")
-        self.logger.debug(f"响应内容长度: {len(response.body)} 字节")
         
         # 检查响应是否包含HTML
         try:
@@ -467,8 +455,8 @@ class ZhilianSpider(scrapy.Spider):
                                 break
                         except json.JSONDecodeError:
                             continue
-                except Exception as e:
-                    self.logger.debug(f"从JSON提取数据失败: {str(e)}")
+                except Exception:
+                    pass
             
             # 职位描述 - 根据实际HTML结构：
             # <div class="describtion__detail-content">
@@ -570,19 +558,6 @@ class ZhilianSpider(scrapy.Spider):
                 except:
                     pass
             
-            # 详细的调试信息：输出每个字段的提取结果
-            self.logger.info("=" * 80)
-            self.logger.info(f"📋 解析职位详情页: {response.url}")
-            self.logger.info("-" * 80)
-            self.logger.info(f"  职位标题: {job_title if job_title else '❌ 缺失'}")
-            self.logger.info(f"  公司名称: {company_name if company_name else '❌ 缺失'}")
-            self.logger.info(f"  工作地点: {location if location else '❌ 缺失'}")
-            self.logger.info(f"  薪资范围: {salary if salary else '❌ 缺失'}")
-            desc_preview = description[:100] + '...' if description and len(description) > 100 else (description if description else '❌ 缺失')
-            self.logger.info(f"  职位描述: {desc_preview}")
-            self.logger.info(f"  职位类型: {job_type}")
-            self.logger.info("-" * 80)
-            
             # 验证必要字段
             missing_fields = []
             if not job_title:
@@ -591,66 +566,7 @@ class ZhilianSpider(scrapy.Spider):
                 missing_fields.append("公司名称")
             
             if missing_fields:
-                self.logger.error("=" * 80)
-                self.logger.error(f"❌ 缺少必要字段，无法保存职位")
-                self.logger.error(f"   缺失字段: {', '.join(missing_fields)}")
-                self.logger.error(f"   URL: {response.url}")
-                self.logger.error("-" * 80)
-                
-                # 检查页面中是否存在关键元素
-                self.logger.warning("🔍 页面结构分析:")
-                has_h1_title = bool(response.css('h1.summary-plane__title').get())
-                has_company_info = bool(response.css('.join-company__content').get())
-                has_company_title = bool(response.css('a.company__title').get())
-                has_summary_plane = bool(response.css('.summary-plane').get())
-                has_describtion = bool(response.css('.describtion__detail-content').get())
-                
-                self.logger.warning(f"   ✓ h1.summary-plane__title 存在: {has_h1_title}")
-                self.logger.warning(f"   ✓ .join-company__content 存在: {has_company_info}")
-                self.logger.warning(f"   ✓ a.company__title 存在: {has_company_title}")
-                self.logger.warning(f"   ✓ .summary-plane 存在: {has_summary_plane}")
-                self.logger.warning(f"   ✓ .describtion__detail-content 存在: {has_describtion}")
-                
-                # 输出页面标题
-                page_title = response.css('title::text').get()
-                self.logger.warning(f"   页面标题: {page_title}")
-                
-                # 如果h1存在但没提取到文本，输出h1的HTML
-                if has_h1_title and not job_title:
-                    h1_html = response.css('h1.summary-plane__title').get()
-                    if h1_html:
-                        self.logger.warning(f"   h1元素HTML (前200字符): {h1_html[:200]}")
-                        # 尝试用XPath提取
-                        h1_xpath_text = response.css('h1.summary-plane__title').xpath('text()').get()
-                        self.logger.warning(f"   h1 XPath text() 结果: {h1_xpath_text}")
-                
-                # 如果公司信息存在但没提取到，输出公司信息的HTML
-                if has_company_info and not company_name:
-                    company_html = response.css('.join-company__content').get()
-                    if company_html:
-                        self.logger.warning(f"   公司信息HTML (前300字符): {company_html[:300]}")
-                        # 尝试提取公司名称
-                        company_desc = response.css('.join-company__content .company-info__description::text').getall()
-                        self.logger.warning(f"   找到的公司描述文本: {company_desc}")
-                
-                self.logger.error("=" * 80)
-                
-                # 保存失败的页面HTML用于调试（仅保存前几个）
-                if not hasattr(self, '_failed_pages_saved'):
-                    self._failed_pages_saved = 0
-                
-                if self._failed_pages_saved < 3:  # 只保存前3个失败的页面
-                    try:
-                        debug_dir = os.path.join(os.path.dirname(__file__), '../../..', 'debug_pages')
-                        os.makedirs(debug_dir, exist_ok=True)
-                        filename = os.path.join(debug_dir, f'failed_page_{self._failed_pages_saved}.html')
-                        with open(filename, 'w', encoding='utf-8') as f:
-                            f.write(response.text)
-                        self.logger.info(f"💾 已保存失败页面到: {filename}")
-                        self._failed_pages_saved += 1
-                    except Exception as e:
-                        self.logger.debug(f"保存失败页面时出错: {str(e)}")
-                
+                self.logger.warning(f"缺少必要字段，跳过保存: {', '.join(missing_fields)} | URL: {response.url}")
                 return []  # 返回空列表而不是None
             
             # 使用deferToThread在线程中执行数据库操作（包括检查和保存）
@@ -700,7 +616,7 @@ class ZhilianSpider(scrapy.Spider):
                 # 检查是否已存在（在事务中检查，防止并发问题）
                 existing_job = JobPage.objects.filter(source_url=source_url).first()
                 if existing_job:
-                    self.logger.info(f"职位已存在，跳过: {job_title} - {company_name} (URL: {source_url})")
+                    self.logger.debug(f"职位已存在，跳过: {job_title} - {company_name}")
                     return
                 
                 # 获取或创建父页面
@@ -719,7 +635,7 @@ class ZhilianSpider(scrapy.Spider):
                             )
                             root_page.add_child(instance=parent_page)
                             parent_page.save_revision().publish()
-                            self.logger.info("创建了新的职位索引页")
+                            self.logger.debug("创建了新的职位索引页")
                     except Exception as e:
                         self.logger.warning(f"无法创建父页面，尝试使用默认页面: {str(e)}")
                         # 使用第一个可用的页面
@@ -746,20 +662,12 @@ class ZhilianSpider(scrapy.Spider):
                 # 添加到页面树并发布（在事务中执行）
                 parent_page.add_child(instance=job_page)
                 job_page.save_revision().publish()
-                self.logger.info("=" * 80)
-                self.logger.info(f"✅ 成功保存职位到数据库!")
-                self.logger.info(f"   职位: {job_title}")
-                self.logger.info(f"   公司: {company_name}")
-                self.logger.info(f"   地点: {location}")
-                self.logger.info(f"   薪资: {salary}")
-                self.logger.info("=" * 80)
+                self.logger.info(f"✓ 已保存: {job_title} - {company_name} ({location})")
             
-        except IntegrityError as e:
+        except IntegrityError:
             # 数据库唯一约束冲突（如果设置了唯一约束）
-            self.logger.warning(f"⚠️  职位可能已存在（数据库约束冲突）: {job_title} - {company_name}")
-            self.logger.warning(f"   URL: {source_url}")
-            self.logger.debug(f"   错误详情: {str(e)}")
+            self.logger.debug(f"职位可能已存在（数据库约束冲突）: {job_title} - {company_name}")
         except Exception as e:
-            self.logger.error(f"✗ 保存职位失败: {job_title} - {company_name}, 错误: {str(e)}")
+            self.logger.error(f"保存职位失败: {job_title} - {company_name}, 错误: {str(e)}")
             import traceback
             self.logger.error(traceback.format_exc())
