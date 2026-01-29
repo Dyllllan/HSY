@@ -224,6 +224,8 @@ class RecommendationsPage(Page):
         # 添加到上下文
         context['recommendations'] = recommendations
         context['profile'] = profile
+        # 预处理偏好地点列表，供模板使用
+        context['preferred_locations_list'] = preferred_locations
         
         return context
     

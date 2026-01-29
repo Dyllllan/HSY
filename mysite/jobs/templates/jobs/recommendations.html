@@ -140,12 +140,14 @@
                                     <i class="bi bi-globe"></i> {{ job.source_website }}
                                 </span>
                                 <div>
-                                    <a href="{% pageurl job %}" class="btn btn-sm btn-primary btn-touch">
-                                        查看详情
+                                    <a href="{% pageurl job %}" class="btn btn-sm btn-primary btn-touch" title="查看职位详情">
+                                        <i class="bi bi-eye me-1"></i>查看详情
                                     </a>
-                                    <button class="btn btn-sm btn-outline-secondary btn-touch save-job" data-job-id="{{ job.id }}">
+                                    {% if user.is_authenticated %}
+                                    <button class="btn btn-sm btn-outline-secondary btn-touch save-job" data-job-id="{{ job.id }}" title="收藏职位">
                                         <i class="bi bi-bookmark"></i>
                                     </button>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
