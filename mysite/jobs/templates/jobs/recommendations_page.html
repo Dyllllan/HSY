@@ -416,16 +416,16 @@
                             </div>
                             
                             <div class="job-actions">
-                                {# 直接使用 url_path，因为 pageurl 可能因为 Site 配置问题返回 None #}
-                                {% if job.url_path %}
-                                <a href="{{ job.url_path }}" class="btn btn-primary btn-recommended">
-                                    <i class="bi bi-eye me-1"></i>查看详情
-                                </a>
-                                {% else %}
-                                {# 如果 url_path 为空，尝试使用 pageurl #}
+                                {# 使用 pageurl 生成链接，它会自动处理 Site 配置和相对路径 #}
                                 {% pageurl job as job_url %}
                                 {% if job_url %}
                                 <a href="{{ job_url }}" class="btn btn-primary btn-recommended">
+                                    <i class="bi bi-eye me-1"></i>查看详情
+                                </a>
+                                {% else %}
+                                {# 如果 pageurl 失败，尝试使用 url_path #}
+                                {% if job.url_path %}
+                                <a href="{{ job.url_path }}" class="btn btn-primary btn-recommended">
                                     <i class="bi bi-eye me-1"></i>查看详情
                                 </a>
                                 {% else %}

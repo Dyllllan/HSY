@@ -19,6 +19,12 @@ from django.utils.text import slugify
 from twisted.internet import threads, defer
 import re
 
+# 可选依赖：用于将中文转换为拼音
+try:
+    from unidecode import unidecode  # type: ignore[import-untyped]
+except ImportError:
+    unidecode = None
+
 class ZhilianSpider(scrapy.Spider):
     name = 'zhilian'
     allowed_domains = ['www.zhaopin.com', 'sou.zhaopin.com']
@@ -667,12 +673,11 @@ class ZhilianSpider(scrapy.Spider):
                 safe_title = job_title or "未知职位"
                 
                 # 尝试使用 unidecode 处理中文（如果可用）
-                try:
-                    from unidecode import unidecode
+                if unidecode:
                     # 先将中文转换为拼音，然后再 slugify
                     safe_company = unidecode(safe_company)
                     safe_title = unidecode(safe_title)
-                except ImportError:
+                else:
                     # 如果没有 unidecode，移除所有非ASCII字符
                     safe_company = re.sub(r'[^\x00-\x7F]+', '', safe_company)
                     safe_title = re.sub(r'[^\x00-\x7F]+', '', safe_title)

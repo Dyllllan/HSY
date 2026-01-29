@@ -32,7 +32,10 @@
     </head>
 
     <body class="{% block body_class %}{% endblock %}">
-        {% wagtailuserbar %}
+        {# 只在有页面对象且不是根页面时显示 userbar #}
+        {% if page and page.depth > 1 %}
+            {% wagtailuserbar %}
+        {% endif %}
 
         {% block content %}{% endblock %}
 
