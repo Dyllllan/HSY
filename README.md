@@ -1,5 +1,1 @@
-初步写了一些网站的功能还有连接了数据库.
-先创个虚拟环境.然后运行:
-pip install wagtail和
-pip install -r requirements.txt  
-看看能不能在本地跑
+工作搜索功能，job_pages，account/login/，/sign_up/界面优化，user_profile界面制作，推荐机制优化，增加其他招聘网站的爬虫脚本
