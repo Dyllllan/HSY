@@ -432,7 +432,6 @@ class ZhilianSpider(scrapy.Spider):
                     for json_str in json_matches:
                         try:
                             data = json.loads(json_str)
-                            # 递归搜索JSON中的职位信息
                             def find_in_dict(d, keys):
                                 if isinstance(d, dict):
                                     for k, v in d.items():

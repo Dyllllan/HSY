@@ -246,17 +246,42 @@
             </h3>
             <div class="page-list">
                 {% for child in children %}
-                <a href="{% pageurl child %}" class="page-item-card">
-                    <h4>{{ child.title }}</h4>
-                    {% if child.search_description %}
-                    <p>{{ child.search_description|truncatewords:20 }}</p>
+                    {# 过滤掉"个性化推荐"和"职位搜索"页面 #}
+                    {% if child.title != "个性化推荐" and child.title != "职位搜索" %}
+                    <a href="{% pageurl child %}" class="page-item-card">
+                        <h4>{{ child.title }}</h4>
+                        {% if child.search_description %}
+                        <p>{{ child.search_description|truncatewords:20 }}</p>
+                        {% endif %}
+                    </a>
                     {% endif %}
-                </a>
                 {% endfor %}
+                {# 添加个人信息按钮 #}
+                <a href="{% url 'account_profile' %}" class="page-item-card">
+                    <h4>
+                        <i class="bi bi-person me-2"></i>个人信息
+                    </h4>
+                    <p>查看和编辑您的个人档案信息</p>
+                </a>
             </div>
         </div>
         {% endif %}
         {% endwith %}
+        {% else %}
+        {# 如果没有子页面，也显示个人信息按钮 #}
+        <div class="children-pages">
+            <h3>
+                <i class="bi bi-folder me-2"></i>相关页面
+            </h3>
+            <div class="page-list">
+                <a href="{% url 'account_profile' %}" class="page-item-card">
+                    <h4>
+                        <i class="bi bi-person me-2"></i>个人信息
+                    </h4>
+                    <p>查看和编辑您的个人档案信息</p>
+                </a>
+            </div>
+        </div>
         {% endif %}
         
         <!-- 如果没有内容也没有子页面，显示默认内容 -->
