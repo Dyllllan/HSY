@@ -19,7 +19,6 @@ from django.utils.text import slugify
 from twisted.internet import threads, defer
 import re
 
-# 可选依赖：用于将中文转换为拼音
 try:
     from unidecode import unidecode  # type: ignore[import-untyped]
 except ImportError:
@@ -29,7 +28,6 @@ class ZhilianSpider(scrapy.Spider):
     name = 'zhilian'
     allowed_domains = ['www.zhaopin.com', 'sou.zhaopin.com']
     
-    # 城市代码映射（北京=530，上海=538，深圳=765等）
     CITY_CODES = {
         '北京': '530',
         '上海': '538',
@@ -45,7 +43,6 @@ class ZhilianSpider(scrapy.Spider):
         
         for keyword in keywords:
             # 使用智联招聘的搜索URL
-            # 方式1: 使用新的搜索页面
             url = f'https://sou.zhaopin.com/?jl={self.CITY_CODES.get(city, "530")}&kw={quote(keyword)}&p=1'
             
             yield scrapy.Request(
@@ -140,7 +137,7 @@ class ZhilianSpider(scrapy.Spider):
             self.logger.error(f"可能是压缩格式问题，Content-Encoding: {content_encoding}")
             # 尝试手动解压（如果需要）
             if 'br' in content_encoding.lower():
-                self.logger.error("⚠️  响应使用Brotli压缩，但无法解压！")
+                self.logger.error("响应使用Brotli压缩，但无法解压！")
                 self.logger.error("   解决方案：安装 brotli 或 brotlicffi 库")
                 self.logger.error("   命令：pip install brotli 或 pip install brotlicffi")
             return []  # 返回空列表而不是None
@@ -150,7 +147,7 @@ class ZhilianSpider(scrapy.Spider):
         
         # 如果响应不是HTML，记录警告
         if not has_html and not has_title:
-            self.logger.warning(f"⚠️  响应可能不是HTML格式！")
+            self.logger.warning(f"响应可能不是HTML格式！")
             self.logger.warning(f"   Content-Encoding: {content_encoding}")
             self.logger.warning(f"   响应前200字符: {response_text[:200]}")
             
@@ -170,7 +167,7 @@ class ZhilianSpider(scrapy.Spider):
             
             # 如果是压缩问题
             if 'br' in content_encoding.lower() or 'brotli' in content_encoding.lower():
-                self.logger.error("⚠️  响应使用Brotli压缩但无法解压！")
+                self.logger.error("响应使用Brotli压缩但无法解压！")
                 self.logger.error("   请安装 brotli 库: pip install brotli")
                 return []  # 返回空列表而不是None
         
@@ -188,10 +185,9 @@ class ZhilianSpider(scrapy.Spider):
                 if job_title:
                     job_title = job_title.strip()
             
-            # 方法2：如果方法1失败，尝试CSS选择器
             if not job_title:
                 title_selectors = [
-                    'h1.summary-plane__title::text',  # 优先使用实际的结构
+                    'h1.summary-plane__title::text', 
                     '.summary-plane__title::text',
                     'h1.job-title::text',
                     'h1::text',

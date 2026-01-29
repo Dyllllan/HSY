@@ -2,9 +2,11 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib import messages
+from django.http import JsonResponse
 from wagtail.models import Page
 from .models import JobPage, StudentProfile, JobApplication
 from .forms import CustomSignupForm
+from .location_utils import extract_provinces_from_jobs, extract_cities_from_jobs, extract_districts_from_jobs
 
 @login_required
 def personalized_recommendations(request):
@@ -19,8 +21,8 @@ def personalized_recommendations(request):
         from django.shortcuts import redirect
         return redirect('complete_profile')
     
-    # 基础查询：所有已发布的职位
-    all_jobs = Page.objects.type(JobPage).live().specific()
+    # 基础查询：所有已发布的职位 - 直接使用 JobPage.objects 确保可以过滤 JobPage 字段
+    all_jobs = JobPage.objects.live()
     
     # 规则1：按偏好职位类型筛选
     preferred_types = profile.get_preferred_job_types_list()
@@ -96,7 +98,7 @@ def dashboard(request):
     applied_count = user_applications.filter(status='applied').count()
     
     # 计算匹配度（简单算法：基于收藏和申请的比例）
-    total_jobs = Page.objects.type(JobPage).live().count()
+    total_jobs = JobPage.objects.live().count()
     match_rate = min(100, int((saved_count + applied_count) / max(1, total_jobs) * 100)) if total_jobs > 0 else 0
     
     # 获取收藏和申请的记录
@@ -136,4 +138,28 @@ def edit_profile(request):
         'form': form,
         'profile': profile,
     })
+
+
+def get_location_data(request):
+    """API视图：获取省市区级联数据"""
+    level = request.GET.get('level', 'province')  # province, city, district
+    province = request.GET.get('province', '')
+    city = request.GET.get('city', '')
+    
+    if level == 'province':
+        provinces = extract_provinces_from_jobs()
+        return JsonResponse({'data': provinces})
+    
+    elif level == 'city':
+        cities = extract_cities_from_jobs(province=province if province else None)
+        return JsonResponse({'data': cities})
+    
+    elif level == 'district':
+        districts = extract_districts_from_jobs(
+            province=province if province else None,
+            city=city if city else None
+        )
+        return JsonResponse({'data': districts})
+    
+    return JsonResponse({'data': []})
 # Create your views here.

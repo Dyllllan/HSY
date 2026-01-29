@@ -1,0 +1,132 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}用户统计信息{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; 用户统计信息
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>用户统计信息</h1>
+
+<div style="margin: 20px 0;">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="background: #417690; color: white; padding: 20px; border-radius: 5px; min-width: 200px;">
+            <h2 style="margin: 0 0 10px 0; font-size: 24px;">{{ total_users }}</h2>
+            <p style="margin: 0;">总用户数</p>
+        </div>
+        <div style="background: #28a745; color: white; padding: 20px; border-radius: 5px; min-width: 200px;">
+            <h2 style="margin: 0 0 10px 0; font-size: 24px;">{{ active_users }}</h2>
+            <p style="margin: 0;">活跃用户数</p>
+        </div>
+        <div style="background: #007cba; color: white; padding: 20px; border-radius: 5px; min-width: 200px;">
+            <h2 style="margin: 0 0 10px 0; font-size: 24px;">{{ users_with_profile }}</h2>
+            <p style="margin: 0;">有学生档案的用户</p>
+        </div>
+        <div style="background: #17a2b8; color: white; padding: 20px; border-radius: 5px; min-width: 200px;">
+            <h2 style="margin: 0 0 10px 0; font-size: 24px;">{{ active_users_count }}</h2>
+            <p style="margin: 0;">有申请记录的用户</p>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+    <div style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2>申请状态统计</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f0f0f0;">
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">状态</th>
+                    <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">数量</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in status_stats %}
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                        {% if stat.status == 'saved' %}已收藏
+                        {% elif stat.status == 'applied' %}已申请
+                        {% elif stat.status == 'viewed' %}已查看
+                        {% elif stat.status == 'contacted' %}已联系
+                        {% elif stat.status == 'rejected' %}已拒绝
+                        {% elif stat.status == 'accepted' %}已接受
+                        {% else %}{{ stat.status }}
+                        {% endif %}
+                    </td>
+                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">
+                        <strong>{{ stat.count }}</strong>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" style="padding: 10px; text-align: center; color: #999;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2>最近注册的用户</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f0f0f0;">
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">用户名</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">邮箱</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">注册时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in recent_users %}
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                        <a href="{% url 'admin:auth_user_change' user.id %}">{{ user.username }}</a>
+                    </td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ user.email|default:"-" }}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 10px; text-align: center; color: #999;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 5px; margin: 20px 0;">
+    <h2>最活跃的用户</h2>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f0f0f0;">
+                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">用户名</th>
+                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">邮箱</th>
+                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">申请数量</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in most_active_users %}
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                    <a href="{% url 'admin:auth_user_change' user.id %}">{{ user.username }}</a>
+                </td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ user.email|default:"-" }}</td>
+                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">
+                    <strong>{{ user.application_count }}</strong>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" style="padding: 10px; text-align: center; color: #999;">暂无数据</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

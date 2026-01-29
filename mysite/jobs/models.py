@@ -50,19 +50,19 @@ class JobPage(Page):
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
         from django.db.models import Q
-        # 获取所有子页面（职位）
-        job_pages = self.get_children().live().specific()
+        # 获取所有子页面（职位）- 直接使用 JobPage.objects 确保可以过滤 JobPage 字段
+        job_pages = JobPage.objects.child_of(self).live()
         
         # 按类型筛选
         job_type = request.GET.get('job_type')
         if job_type:
             job_pages = job_pages.filter(job_type=job_type)
         
-        # 关键词搜索（标题、公司、描述）
+        # 关键词搜索（职位名称、公司、描述）
         search_query = request.GET.get('q')
         if search_query:
             job_pages = job_pages.filter(
-                Q(title__icontains=search_query) |
+                Q(job_title__icontains=search_query) |
                 Q(company_name__icontains=search_query) |
                 Q(description__icontains=search_query)
             )
@@ -125,6 +125,225 @@ class JobIndexPage(Page):
     class Meta:
         verbose_name = "职位索引页面"
         verbose_name_plural = "职位索引页面"
+    
+    def get_context(self, request, *args, **kwargs):
+        """职位列表页的上下文，包含搜索和筛选功能"""
+        context = super().get_context(request, *args, **kwargs)
+        from django.db.models import Q
+        import re
+        
+        # 获取所有子页面（职位）- 直接使用 JobPage.objects 确保可以过滤 JobPage 字段
+        job_pages = JobPage.objects.child_of(self).live()
+        
+        # 1. 关键词搜索（职位名称、公司名称、职位描述）
+        search_query = request.GET.get('q', '').strip()
+        if search_query:
+            job_pages = job_pages.filter(
+                Q(job_title__icontains=search_query) |
+                Q(company_name__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        
+        # 2. 按职位类型筛选
+        job_type = request.GET.get('job_type', '').strip()
+        if job_type:
+            job_pages = job_pages.filter(job_type=job_type)
+        
+        # 3. 按工作地点筛选（支持省市区分级筛选）
+        province = request.GET.get('province', '').strip()
+        city = request.GET.get('city', '').strip()
+        district = request.GET.get('district', '').strip()
+        
+        if province or city or district:
+            from .location_utils import parse_location
+            location_query = Q()
+            
+            # 遍历所有职位，检查是否符合筛选条件
+            filtered_job_ids = []
+            for job in job_pages:
+                job_province, job_city, job_district = parse_location(job.location)
+                
+                match = True
+                
+                if province:
+                    if job_province != province:
+                        match = False
+                
+                if match and city:
+                    if job_city != city:
+                        match = False
+                
+                if match and district:
+                    if job_district != district:
+                        match = False
+                
+                if match:
+                    filtered_job_ids.append(job.id)
+            
+            if filtered_job_ids:
+                job_pages = job_pages.filter(id__in=filtered_job_ids)
+            else:
+                job_pages = job_pages.none()
+        
+        # 4. 按薪资范围筛选
+        salary_min = request.GET.get('salary_min', '').strip()
+        salary_max = request.GET.get('salary_max', '').strip()
+        
+        if salary_min or salary_max:
+            # 解析薪资字符串，提取数字范围
+            # 支持格式：8-12K, 8K-12K, 8000-12000, 8万-12万等
+            def parse_salary(salary_str):
+                """解析薪资字符串，返回最小值和最大值（单位：元）"""
+                if not salary_str:
+                    return None, None
+                
+                # 移除空格
+                salary_str = salary_str.replace(' ', '')
+                
+                # 处理"面议"等特殊情况
+                if '面议' in salary_str or 'negotiable' in salary_str.lower():
+                    return None, None
+                
+                # 提取数字和单位
+                # 匹配模式：数字-数字K/万/元
+                pattern = r'(\d+(?:\.\d+)?)\s*[-~至]\s*(\d+(?:\.\d+)?)\s*([Kk万万千]?)|(\d+(?:\.\d+)?)\s*([Kk万万千]?)以上|(\d+(?:\.\d+)?)\s*([Kk万万千]?)以下'
+                match = re.search(pattern, salary_str)
+                
+                if match:
+                    if match.group(1) and match.group(2):  # 范围格式：8-12K
+                        min_val = float(match.group(1))
+                        max_val = float(match.group(2))
+                        unit = match.group(3) or ''
+                        
+                        # 转换为元
+                        if '万' in unit or 'w' in unit.lower():
+                            min_val *= 10000
+                            max_val *= 10000
+                        elif 'K' in unit or 'k' in unit or '千' in unit:
+                            min_val *= 1000
+                            max_val *= 1000
+                        
+                        return int(min_val), int(max_val)
+                    elif match.group(4):  # 单个数字格式
+                        val = float(match.group(4))
+                        unit = match.group(5) or ''
+                        
+                        if '万' in unit or 'w' in unit.lower():
+                            val *= 10000
+                        elif 'K' in unit or 'k' in unit or '千' in unit:
+                            val *= 1000
+                        
+                        return int(val), int(val)
+                    elif match.group(6):  # 以上格式
+                        val = float(match.group(6))
+                        unit = match.group(7) or ''
+                        
+                        if '万' in unit or 'w' in unit.lower():
+                            val *= 10000
+                        elif 'K' in unit or 'k' in unit or '千' in unit:
+                            val *= 1000
+                        
+                        return int(val), None
+                    elif match.group(8):  # 以下格式
+                        val = float(match.group(8))
+                        unit = match.group(9) or ''
+                        
+                        if '万' in unit or 'w' in unit.lower():
+                            val *= 10000
+                        elif 'K' in unit or 'k' in unit or '千' in unit:
+                            val *= 1000
+                        
+                        return None, int(val)
+                
+                return None, None
+            
+            # 筛选符合条件的职位
+            # 先将 QuerySet 转换为列表以便逐个检查薪资
+            job_list = list(job_pages)
+            filtered_job_ids = []
+            
+            for job in job_list:
+                job_min, job_max = parse_salary(job.salary)
+                
+                # 如果职位没有薪资信息
+                if job_min is None and job_max is None:
+                    # 如果用户指定了薪资要求，则排除没有薪资信息的职位
+                    # 如果用户没有指定薪资要求，则包含该职位
+                    if not salary_min and not salary_max:
+                        filtered_job_ids.append(job.id)
+                    continue
+                
+                # 用户指定的最小薪资（单位：元）
+                user_min = None
+                if salary_min:
+                    try:
+                        user_min = int(float(salary_min) * 1000)  # 假设用户输入的是K为单位
+                    except ValueError:
+                        pass
+                
+                # 用户指定的最大薪资（单位：元）
+                user_max = None
+                if salary_max:
+                    try:
+                        user_max = int(float(salary_max) * 1000)  # 假设用户输入的是K为单位
+                    except ValueError:
+                        pass
+                
+                # 判断是否匹配
+                match = True
+                
+                if user_min is not None:
+                    # 用户要求最低薪资，职位最高薪资必须大于等于用户最低要求
+                    if job_max is not None and job_max < user_min:
+                        match = False
+                    # 如果职位只有最低薪资，检查是否满足要求
+                    elif job_max is None and job_min is not None and job_min < user_min:
+                        match = False
+                
+                if user_max is not None and match:
+                    # 用户要求最高薪资，职位最低薪资必须小于等于用户最高要求
+                    if job_min is not None and job_min > user_max:
+                        match = False
+                
+                if match:
+                    filtered_job_ids.append(job.id)
+            
+            # 使用 id__in 来筛选符合条件的职位
+            if filtered_job_ids:
+                job_pages = job_pages.filter(id__in=filtered_job_ids)
+            else:
+                # 如果没有匹配的职位，返回空 QuerySet
+                job_pages = job_pages.none()
+        
+        # 分页（每页15条，适合移动端）
+        paginator = Paginator(job_pages, 15)
+        page = request.GET.get('page')
+        try:
+            job_pages = paginator.page(page)
+        except PageNotAnInteger:
+            job_pages = paginator.page(1)
+        except EmptyPage:
+            job_pages = paginator.page(paginator.num_pages)
+        
+        # 获取省份列表，用于下拉选择
+        from .location_utils import extract_provinces_from_jobs
+        provinces = extract_provinces_from_jobs()
+        
+        # 添加到上下文
+        context['job_pages'] = job_pages
+        context['job_types'] = JobPage.JOB_TYPES  # 用于筛选标签
+        context['provinces'] = provinces  # 用于省份下拉选择
+        context['current_filters'] = {
+            'q': search_query,
+            'job_type': job_type,
+            'province': province,
+            'city': city,
+            'district': district,
+            'salary_min': salary_min,
+            'salary_max': salary_max,
+        }
+        
+        return context
     
     # 职位列表页使用 job_index_page.html 模板
     template = "jobs/job_index_page.html"
@@ -372,6 +591,32 @@ class StudentProfile(models.Model):
         """更新最后活跃时间"""
         self.last_active = timezone.now()
         self.save(update_fields=['last_active'])
+    
+    @property
+    def user_email(self):
+        """获取用户邮箱"""
+        return self.user.email if self.user else "-"
+    
+    @property
+    def user_full_name(self):
+        """获取用户全名"""
+        if self.user:
+            name = f"{self.user.first_name} {self.user.last_name}".strip()
+            return name or self.user.username
+        return "-"
+    
+    def get_activity_summary(self):
+        """获取活动统计摘要"""
+        try:
+            # JobApplication 在文件后面定义，使用字符串引用避免循环导入
+            from django.apps import apps
+            JobApplication = apps.get_model('jobs', 'JobApplication')
+            applications = JobApplication.objects.filter(user=self.user)
+            saved = applications.filter(status='saved').count()
+            applied = applications.filter(status='applied').count()
+            return f"收藏: {saved} | 申请: {applied}"
+        except Exception:
+            return "-"
 
 
 

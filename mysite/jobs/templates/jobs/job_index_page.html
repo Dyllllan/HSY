@@ -76,7 +76,7 @@
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
         border-radius: 20px;
-        padding: 1.5rem;
+        padding: 2rem;
         margin-bottom: 2rem;
         box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         border: 1px solid rgba(255, 255, 255, 0.3);
@@ -89,14 +89,15 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.75rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
     }
     
     .filter-tab {
-        padding: 0.5rem 1.25rem;
+        padding: 0.75rem 1.5rem;
         border-radius: 25px;
         text-decoration: none;
         font-weight: 500;
+        font-size: 1rem;
         transition: all 0.3s ease;
         border: 2px solid transparent;
     }
@@ -124,26 +125,31 @@
     }
     
     .search-box .form-control {
-        border-radius: 25px;
-        padding: 0.75rem 1rem 0.75rem 3rem;
+        border-radius: 30px;
+        padding: 1.25rem 1.5rem 1.25rem 4rem;
         border: 2px solid rgba(102, 126, 234, 0.2);
         background: rgba(255, 255, 255, 0.9);
         transition: all 0.3s ease;
+        font-size: 1.1rem;
+        height: auto;
+        line-height: 1.5;
     }
     
     .search-box .form-control:focus {
         border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.25);
         background: white;
+        transform: scale(1.01);
     }
     
     .search-box .search-icon {
         position: absolute;
-        left: 1rem;
+        left: 1.5rem;
         top: 50%;
         transform: translateY(-50%);
         color: #667eea;
         z-index: 10;
+        font-size: 1.5rem;
     }
     
     .search-box .clear-btn {
@@ -158,6 +164,143 @@
         align-items: center;
         justify-content: center;
         padding: 0;
+    }
+    
+    /* 筛选表单样式 */
+    #search-filter-form .form-control,
+    #search-filter-form .form-select {
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        background: rgba(255, 255, 255, 0.9);
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        padding: 1rem 1.25rem;
+        height: auto;
+        border-radius: 25px;
+    }
+    
+    #search-filter-form .form-control:focus,
+    #search-filter-form .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.25);
+        background: white;
+    }
+    
+    #search-filter-form .form-select {
+        padding-right: 2.5rem;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-size: 1.2rem;
+    }
+    
+    /* 地点选择框样式 */
+    .location-select {
+        font-size: 0.95rem;
+        min-width: 0; /* 允许flex收缩 */
+    }
+    
+    .location-select:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #f5f5f5;
+    }
+    
+    /* 地点选择框容器 */
+    .location-selects-wrapper {
+        flex-wrap: nowrap; /* 确保横向排列，不换行 */
+    }
+    
+    @media (max-width: 768px) {
+        .location-selects-wrapper {
+            flex-wrap: wrap; /* 移动端允许换行 */
+        }
+        
+        .location-selects-wrapper .location-select {
+            flex: 1 1 calc(33.333% - 0.5rem); /* 移动端每个占1/3宽度 */
+            min-width: 100px;
+        }
+    }
+    
+    #search-filter-form .input-group-text {
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        border-left: none;
+        border-right: none;
+        color: #667eea;
+        font-weight: 600;
+        font-size: 1.1rem;
+        padding: 1rem 0.75rem;
+    }
+    
+    #search-filter-form .input-group .form-control:first-child {
+        border-radius: 25px 0 0 25px;
+    }
+    
+    #search-filter-form .input-group .form-control:last-child {
+        border-radius: 0 25px 25px 0;
+    }
+    
+    #search-filter-form .btn {
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        border-radius: 25px;
+    }
+    
+    #search-filter-form .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: transparent;
+    }
+    
+    #search-filter-form .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    #search-filter-form .btn-outline-secondary {
+        border-color: rgba(102, 126, 234, 0.2);
+        color: #667eea;
+        padding: 1rem;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #search-filter-form .btn-outline-secondary:hover {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: #667eea;
+    }
+    
+    #search-filter-form .row {
+        align-items: stretch;
+    }
+    
+    #search-filter-form .row > div {
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    #search-filter-form .row > div .d-flex {
+        height: 100%;
+    }
+    
+    #search-filter-form .row > div .d-flex .btn {
+        height: 100%;
+    }
+    
+    /* 搜索框占位符样式 */
+    .search-box .form-control::placeholder {
+        color: #a0aec0;
+        font-size: 1rem;
+    }
+    
+    /* 输入框占位符样式 */
+    #search-filter-form .form-control::placeholder {
+        color: #a0aec0;
+        font-size: 0.95rem;
     }
     
     /* 职位卡片 */
@@ -366,6 +509,44 @@
             top: 60px;
         }
         
+        #search-filter-form .row {
+            margin: 0;
+        }
+        
+        #search-filter-form .col-12 {
+            margin-bottom: 1rem;
+        }
+        
+        #search-filter-form .col-12:last-child {
+            margin-bottom: 0;
+        }
+        
+        #search-filter-form .form-control,
+        #search-filter-form .form-select {
+            font-size: 0.95rem;
+            padding: 0.875rem 1rem;
+        }
+        
+        .search-box .form-control {
+            font-size: 1rem;
+            padding: 1rem 1.25rem 1rem 3.5rem;
+        }
+        
+        .search-box .search-icon {
+            font-size: 1.25rem;
+            left: 1.25rem;
+        }
+        
+        #search-filter-form .btn {
+            font-size: 0.95rem;
+            padding: 0.875rem 1.25rem;
+        }
+        
+        .filter-tab {
+            padding: 0.625rem 1.25rem;
+            font-size: 0.9rem;
+        }
+        
         .job-card {
             padding: 1.25rem;
         }
@@ -410,34 +591,94 @@
         <div class="filter-bar">
             <!-- 分类筛选 -->
             <div class="filter-tabs">
-                <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}" 
+                <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.province %}province={{ request.GET.province }}&{% endif %}{% if request.GET.city %}city={{ request.GET.city }}&{% endif %}{% if request.GET.district %}district={{ request.GET.district }}&{% endif %}{% if request.GET.salary_min %}salary_min={{ request.GET.salary_min }}&{% endif %}{% if request.GET.salary_max %}salary_max={{ request.GET.salary_max }}&{% endif %}" 
                    class="filter-tab {% if not request.GET.job_type %}active{% endif %}">
                     全部
                 </a>
                 {% for type_key, type_name in job_types %}
-                <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}job_type={{ type_key }}" 
+                <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.province %}province={{ request.GET.province }}&{% endif %}{% if request.GET.city %}city={{ request.GET.city }}&{% endif %}{% if request.GET.district %}district={{ request.GET.district }}&{% endif %}{% if request.GET.salary_min %}salary_min={{ request.GET.salary_min }}&{% endif %}{% if request.GET.salary_max %}salary_max={{ request.GET.salary_max }}&{% endif %}job_type={{ type_key }}" 
                    class="filter-tab {% if request.GET.job_type == type_key %}active{% endif %}">
                     {{ type_name }}
                 </a>
                 {% endfor %}
             </div>
             
-            <!-- 搜索框 -->
-            <form method="get" class="search-box">
-                <i class="bi bi-search search-icon"></i>
-                <input type="text" 
-                       name="q" 
-                       class="form-control" 
-                       placeholder="搜索职位、公司名称..." 
-                       value="{{ request.GET.q }}">
+            <!-- 搜索和筛选表单 -->
+            <form method="get" id="search-filter-form">
+                <div class="row g-3">
+                    <!-- 关键词搜索 -->
+                    <div class="col-12 col-md-5">
+                        <div class="search-box">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" 
+                                   name="q" 
+                                   class="form-control" 
+                                   placeholder="搜索职位名称、公司名称或职位描述..." 
+                                   value="{{ request.GET.q }}">
+                        </div>
+                    </div>
+                    
+                    <!-- 工作地点筛选（省市区三级联动 - 横向排列） -->
+                    <div class="col-12 col-md-3">
+                        <div class="d-flex gap-2 location-selects-wrapper">
+                            <select name="province" id="province-select" class="form-select location-select flex-fill">
+                                <option value="">省份</option>
+                                {% for prov in provinces %}
+                                <option value="{{ prov }}" {% if request.GET.province == prov %}selected{% endif %}>{{ prov }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="city" id="city-select" class="form-select location-select flex-fill" {% if not request.GET.province %}disabled{% endif %}>
+                                <option value="">城市</option>
+                                {% if request.GET.city %}
+                                <option value="{{ request.GET.city }}" selected>{{ request.GET.city }}</option>
+                                {% endif %}
+                            </select>
+                            <select name="district" id="district-select" class="form-select location-select flex-fill" {% if not request.GET.city %}disabled{% endif %}>
+                                <option value="">区县</option>
+                                {% if request.GET.district %}
+                                <option value="{{ request.GET.district }}" selected>{{ request.GET.district }}</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- 薪资范围筛选 -->
+                    <div class="col-12 col-md-2">
+                        <div class="input-group">
+                            <input type="number" 
+                                   name="salary_min" 
+                                   class="form-control" 
+                                   placeholder="最低(K)"
+                                   value="{{ request.GET.salary_min }}"
+                                   min="0">
+                            <span class="input-group-text">-</span>
+                            <input type="number" 
+                                   name="salary_max" 
+                                   class="form-control" 
+                                   placeholder="最高(K)"
+                                   value="{{ request.GET.salary_max }}"
+                                   min="0">
+                        </div>
+                    </div>
+                    
+                    <!-- 提交和重置按钮 -->
+                    <div class="col-12 col-md-2">
+                        <div class="d-flex gap-2 h-100">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="bi bi-search me-1"></i>搜索
+                            </button>
+                            {% if request.GET.q or request.GET.job_type or request.GET.province or request.GET.city or request.GET.district or request.GET.salary_min or request.GET.salary_max %}
+                            <a href="?" class="btn btn-outline-secondary" title="清除筛选">
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 保留职位类型筛选 -->
                 {% if request.GET.job_type %}
                 <input type="hidden" name="job_type" value="{{ request.GET.job_type }}">
-                {% endif %}
-                {% if request.GET.q %}
-                <a href="?{% if request.GET.job_type %}job_type={{ request.GET.job_type }}{% endif %}" 
-                   class="btn btn-sm btn-outline-secondary clear-btn">
-                    <i class="bi bi-x"></i>
-                </a>
                 {% endif %}
             </form>
         </div>
@@ -541,6 +782,111 @@
 </div>
 
 <script>
+    // 省市区级联选择功能
+    (function() {
+        const provinceSelect = document.getElementById('province-select');
+        const citySelect = document.getElementById('city-select');
+        const districtSelect = document.getElementById('district-select');
+        const apiUrl = '/api/location-data/';
+        
+        // 保存当前选中的值（用于页面加载时恢复）
+        const currentProvince = '{{ request.GET.province|default:"" }}';
+        const currentCity = '{{ request.GET.city|default:"" }}';
+        const currentDistrict = '{{ request.GET.district|default:"" }}';
+        
+        // 加载城市列表
+        function loadCities(province) {
+            citySelect.innerHTML = '<option value="">城市</option>';
+            districtSelect.innerHTML = '<option value="">区县</option>';
+            districtSelect.disabled = true;
+            
+            if (!province) {
+                citySelect.disabled = true;
+                return;
+            }
+            
+            citySelect.disabled = false;
+            citySelect.innerHTML = '<option value="">加载中...</option>';
+            
+            fetch(`${apiUrl}?level=city&province=${encodeURIComponent(province)}`)
+                .then(response => response.json())
+                .then(data => {
+                    citySelect.innerHTML = '<option value="">城市</option>';
+                    data.data.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        if (city === currentCity) {
+                            option.selected = true;
+                            loadDistricts(province, city);
+                        }
+                        citySelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('加载城市失败:', error);
+                    citySelect.innerHTML = '<option value="">加载失败</option>';
+                });
+        }
+        
+        // 加载区县列表
+        function loadDistricts(province, city) {
+            districtSelect.innerHTML = '<option value="">区县</option>';
+            
+            if (!city) {
+                districtSelect.disabled = true;
+                return;
+            }
+            
+            districtSelect.disabled = false;
+            districtSelect.innerHTML = '<option value="">加载中...</option>';
+            
+            fetch(`${apiUrl}?level=district&province=${encodeURIComponent(province)}&city=${encodeURIComponent(city)}`)
+                .then(response => response.json())
+                .then(data => {
+                    districtSelect.innerHTML = '<option value="">区县</option>';
+                    data.data.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district;
+                        option.textContent = district;
+                        if (district === currentDistrict) {
+                            option.selected = true;
+                        }
+                        districtSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('加载区县失败:', error);
+                    districtSelect.innerHTML = '<option value="">加载失败</option>';
+                });
+        }
+        
+        // 省份选择变化
+        if (provinceSelect) {
+            provinceSelect.addEventListener('change', function() {
+                const province = this.value;
+                loadCities(province);
+            });
+            
+            // 页面加载时，如果有选中的省份，加载对应的城市
+            if (currentProvince && currentProvince !== '') {
+                // 延迟加载，确保DOM已完全渲染
+                setTimeout(() => {
+                    loadCities(currentProvince);
+                }, 100);
+            }
+        }
+        
+        // 城市选择变化
+        if (citySelect) {
+            citySelect.addEventListener('change', function() {
+                const province = provinceSelect.value;
+                const city = this.value;
+                loadDistricts(province, city);
+            });
+        }
+    })();
+    
     // 收藏职位功能
     document.querySelectorAll('.save-job').forEach(button => {
         button.addEventListener('click', function() {

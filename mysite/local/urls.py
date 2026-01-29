@@ -20,6 +20,8 @@ urlpatterns = [
     # 用户工作台和个人档案
     path("accounts/dashboard/", jobs_views.dashboard, name="dashboard"),
     path("accounts/profile/", jobs_views.edit_profile, name="account_profile"),
+    # 地点数据API
+    path("api/location-data/", jobs_views.get_location_data, name="location_data"),
 ]
 
 # 在 DEBUG 模式下添加静态文件服务

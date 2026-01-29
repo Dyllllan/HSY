@@ -1,13 +1,14 @@
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel, TabbedInterface, ObjectList
-from .models import StudentProfile, JobPage
+from .models import StudentProfile, JobPage, JobApplication
 from wagtail.admin.ui.tables import DateColumn
 from wagtail.admin.views.generic.models import IndexView
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
 from django.urls import reverse, path
 from django.db.models import Count
+from django.utils.html import format_html
 
 @hooks.register('register_admin_menu_item')
 def register_job_stats_menu_item():
@@ -61,8 +62,8 @@ class StudentProfileViewSet(SnippetViewSet):
     add_to_settings_menu = False
     exclude_from_explorer = False
     
-    list_display = ['user', 'school', 'major', 'graduation_year', 'is_verified']
-    list_filter = ['school', 'major', 'graduation_year', 'is_verified']
+    list_display = ['user', 'school', 'major', 'graduation_year', 'is_verified', 'last_active']
+    list_filter = ['school', 'major', 'graduation_year', 'is_verified', 'created_at']
     search_fields = ['user__username', 'user__email', 'student_id', 'resume_text']
     
     # 自定义编辑界面面板
@@ -94,11 +95,57 @@ class StudentProfileViewSet(SnippetViewSet):
             FieldPanel('last_active', read_only=True),
             FieldPanel('created_at', read_only=True),
         ], heading='状态信息'),
+        
+        ObjectList([
+            FieldPanel('activity_stats', read_only=True),
+        ], heading='活动统计'),
     ])
     
-    def get_queryset(self, request):
+    def activity_stats(self, obj):
+        """显示详细的活动统计（用于编辑界面）"""
+        if not obj.pk:
+            return "保存后显示统计信息"
+        
+        try:
+            applications = JobApplication.objects.filter(user=obj.user)
+            saved_count = applications.filter(status='saved').count()
+            applied_count = applications.filter(status='applied').count()
+            viewed_count = applications.filter(status='viewed').count()
+            total_count = applications.count()
+            
+            html = f"""
+            <div style="padding: 15px; background-color: #f9f9f9; border-radius: 5px; margin: 10px 0;">
+                <h4 style="margin-top: 0;">职位活动统计</h4>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold; width: 150px;">收藏职位：</td>
+                        <td style="padding: 8px;"><span style="color: #007cba; font-size: 16px;">{saved_count}</span> 个</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">申请职位：</td>
+                        <td style="padding: 8px;"><span style="color: #28a745; font-size: 16px;">{applied_count}</span> 个</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">查看职位：</td>
+                        <td style="padding: 8px;"><span style="color: #17a2b8; font-size: 16px;">{viewed_count}</span> 个</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">总操作数：</td>
+                        <td style="padding: 8px;"><strong style="font-size: 16px;">{total_count}</strong> 次</td>
+                    </tr>
+                </table>
+            </div>
+            """
+            return format_html(html)
+        except Exception as e:
+            return f"无法加载统计信息: {str(e)}"
+    
+    activity_stats.short_description = "活动统计详情"
+    
+    def get_queryset(self, request=None):
         """只显示非管理员的学生档案"""
-        qs = super().get_queryset(request)
+        # 直接使用模型管理器获取 queryset
+        qs = self.model.objects.all()
         # 过滤掉超级用户和员工用户
         return qs.filter(user__is_superuser=False, user__is_staff=False)
 

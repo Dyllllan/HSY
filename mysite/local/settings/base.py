@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",#社交账号登录(QQ,微信,github等)
-    "jobs",  # Put jobs after allauth to avoid circular import
+    "jobs", 
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -66,7 +66,7 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = "optional"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-# 设置为 False 以显示退出登录确认页面（更安全）
+# 
 ACCOUNT_LOGOUT_ON_GET = False
 ACCOUNT_RATE_LIMITS = {
     'login_failed': '5/m',  # 5 attempts per minute
