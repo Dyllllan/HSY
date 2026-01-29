@@ -15,7 +15,9 @@ django.setup()
 from wagtail.models import Page
 from jobs.models import JobPage, JobIndexPage
 from django.utils import timezone
+from django.utils.text import slugify
 from twisted.internet import threads, defer
+import re
 
 class ZhilianSpider(scrapy.Spider):
     name = 'zhilian'
@@ -33,7 +35,7 @@ class ZhilianSpider(scrapy.Spider):
     
     def start_requests(self):
         keywords = ['Python', 'Java', '前端', '后端', '算法']
-        city = '广州'  
+        city = '成都'  
         
         for keyword in keywords:
             # 使用智联招聘的搜索URL
@@ -623,19 +625,33 @@ class ZhilianSpider(scrapy.Spider):
                 parent_page = JobIndexPage.objects.filter(slug='zhilian-jobs').first()
                 
                 if not parent_page:
-                    # 尝试查找根页面
+                    # 尝试查找 Site 的 root_page（通常是 HomePage）
                     try:
-                        root_page = Page.objects.filter(depth=1).first()
-                        if root_page:
-                            # 创建JobIndexPage
+                        from wagtail.models import Site
+                        default_site = Site.objects.filter(is_default_site=True).first()
+                        if default_site:
+                            site_root = default_site.root_page
+                            # 创建JobIndexPage，放在 Site 的 root_page 下
                             parent_page = JobIndexPage(
                                 title='智联招聘职位',
                                 slug='zhilian-jobs',
                                 intro='来自智联招聘的职位信息'
                             )
-                            root_page.add_child(instance=parent_page)
+                            site_root.add_child(instance=parent_page)
                             parent_page.save_revision().publish()
                             self.logger.debug("创建了新的职位索引页")
+                        else:
+                            # 如果没有 Site，使用根页面
+                            root_page = Page.objects.filter(depth=1).first()
+                            if root_page:
+                                parent_page = JobIndexPage(
+                                    title='智联招聘职位',
+                                    slug='zhilian-jobs',
+                                    intro='来自智联招聘的职位信息'
+                                )
+                                root_page.add_child(instance=parent_page)
+                                parent_page.save_revision().publish()
+                                self.logger.debug("创建了新的职位索引页（使用根页面）")
                     except Exception as e:
                         self.logger.warning(f"无法创建父页面，尝试使用默认页面: {str(e)}")
                         # 使用第一个可用的页面
@@ -645,9 +661,62 @@ class ZhilianSpider(scrapy.Spider):
                     self.logger.error("无法找到或创建父页面，跳过保存")
                     return
                 
+                # 生成唯一的 slug
+                # 确保 company_name 和 job_title 不为空
+                safe_company = company_name or "未知公司"
+                safe_title = job_title or "未知职位"
+                
+                # 尝试使用 unidecode 处理中文（如果可用）
+                try:
+                    from unidecode import unidecode
+                    # 先将中文转换为拼音，然后再 slugify
+                    safe_company = unidecode(safe_company)
+                    safe_title = unidecode(safe_title)
+                except ImportError:
+                    # 如果没有 unidecode，移除所有非ASCII字符
+                    safe_company = re.sub(r'[^\x00-\x7F]+', '', safe_company)
+                    safe_title = re.sub(r'[^\x00-\x7F]+', '', safe_title)
+                
+                base_slug = slugify(f"{safe_company}-{safe_title}")
+                
+                # 如果 slug 为空（可能因为特殊字符或全是中文），使用备用方案
+                if not base_slug or len(base_slug.strip()) == 0:
+                    # 使用职位ID作为备用（从 source_url 中提取，或使用时间戳）
+                    import time
+                    # 尝试从 source_url 中提取职位ID
+                    job_id_match = re.search(r'/(\d+)\.html', source_url)
+                    if job_id_match:
+                        base_slug = f"job-{job_id_match.group(1)}"
+                    else:
+                        base_slug = f"job-{int(time.time())}"
+                
+                # 确保 slug 只包含 ASCII 字符（移除任何残留的非ASCII字符）
+                base_slug = re.sub(r'[^\w\-]', '', base_slug)
+                # 移除连续的连字符
+                base_slug = re.sub(r'-+', '-', base_slug).strip('-')
+                
+                # 如果 slug 太长，截断（Wagtail slug 最大长度通常是 255）
+                if len(base_slug) > 200:
+                    base_slug = base_slug[:200]
+                
+                # 确保 slug 唯一性（如果已存在，添加数字后缀）
+                slug = base_slug
+                counter = 1
+                while JobPage.objects.filter(slug=slug).exists():
+                    suffix = f"-{counter}"
+                    max_len = 200 - len(suffix)
+                    slug = base_slug[:max_len] + suffix
+                    counter += 1
+                    # 防止无限循环
+                    if counter > 1000:
+                        import time
+                        slug = f"{base_slug[:180]}-{int(time.time())}"
+                        break
+                
                 # 创建JobPage实例
                 job_page = JobPage(
                     title=f"{company_name}-{job_title}",
+                    slug=slug,
                     job_title=job_title,
                     company_name=company_name,
                     location=location,
@@ -661,8 +730,13 @@ class ZhilianSpider(scrapy.Spider):
                 
                 # 添加到页面树并发布（在事务中执行）
                 parent_page.add_child(instance=job_page)
-                job_page.save_revision().publish()
+                # 保存并发布，确保 URL 路径正确更新
+                revision = job_page.save_revision()
+                revision.publish()
+                # 强制刷新页面对象以获取最新的 URL 路径
+                job_page.refresh_from_db()
                 self.logger.info(f"✓ 已保存: {job_title} - {company_name} ({location})")
+                self.logger.debug(f"   URL路径: {job_page.url_path}")
             
         except IntegrityError:
             # 数据库唯一约束冲突（如果设置了唯一约束）

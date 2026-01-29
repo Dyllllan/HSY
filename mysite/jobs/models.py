@@ -163,9 +163,9 @@ class RecommendationsPage(Page):
             context['needs_profile'] = True
             return context
         
-        # 基础查询：所有已发布的职位（直接使用JobPage模型）
+        # 基础查询：所有已发布的职位（使用.specific()确保加载具体类型）
         from django.db.models import Q
-        all_jobs = JobPage.objects.live()
+        all_jobs = JobPage.objects.live().specific()
         
         # 规则1：按偏好职位类型筛选
         preferred_types = profile.get_preferred_job_types_list()
@@ -203,21 +203,58 @@ class RecommendationsPage(Page):
             major_jobs = location_jobs.filter(major_query)
         
         # 规则4：应届生优先（标记为接受应届生的职位）
-        # 需要先转换为列表才能进行文本搜索
-        major_jobs_list = list(major_jobs)
+        # 需要先转换为列表才能进行文本搜索，使用.specific()确保属性已加载
+        major_jobs_list = list(major_jobs.specific())
         fresh_graduate_jobs = [job for job in major_jobs_list if '应届' in job.description or '毕业生' in job.description]
         other_jobs = [job for job in major_jobs_list if job not in fresh_graduate_jobs]
         
         # 组合结果：应届生职位在前，其他在后
         final_jobs = fresh_graduate_jobs + other_jobs
         
-        # 去重并限制数量
+        # 去重并限制数量，同时确保所有职位都有有效的 slug
         seen_ids = set()
         unique_jobs = []
         for job in final_jobs:
             if job.id not in seen_ids:
-                seen_ids.add(job.id)
-                unique_jobs.append(job)
+                # 强制重新从数据库加载以确保所有属性（包括 slug）都被正确加载
+                try:
+                    reloaded_job = JobPage.objects.filter(pk=job.pk).live().specific().first()
+                    if reloaded_job and reloaded_job.slug:
+                        seen_ids.add(reloaded_job.id)
+                        unique_jobs.append(reloaded_job)
+                    elif reloaded_job and not reloaded_job.slug:
+                        # 如果重新加载后仍然没有 slug，生成一个
+                        from django.utils.text import slugify
+                        # 尝试使用 unidecode 处理中文
+                        company = reloaded_job.company_name or "未知公司"
+                        title = reloaded_job.job_title or "未知职位"
+                        try:
+                            from unidecode import unidecode
+                            company = unidecode(company)
+                            title = unidecode(title)
+                        except ImportError:
+                            pass
+                        base_slug = slugify(f"{company}-{title}")
+                        if not base_slug or len(base_slug.strip()) == 0:
+                            base_slug = f"job-{reloaded_job.id}"
+                        # 确保唯一性
+                        slug = base_slug
+                        counter = 1
+                        while JobPage.objects.filter(slug=slug).exclude(pk=reloaded_job.pk).exists():
+                            slug = f"{base_slug}-{counter}"
+                            counter += 1
+                        reloaded_job.slug = slug
+                        reloaded_job.save(update_fields=['slug'])
+                        if reloaded_job.live:
+                            reloaded_job.save_revision().publish()
+                        seen_ids.add(reloaded_job.id)
+                        unique_jobs.append(reloaded_job)
+                except Exception as e:
+                    # 如果重新加载失败，跳过这个职位
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"无法加载职位 {job.id}: {str(e)}")
+                    pass
         
         recommendations = unique_jobs[:20]  # 最多推荐20个
         

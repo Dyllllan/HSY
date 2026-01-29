@@ -1,7 +1,7 @@
 from .base import *
 import os
 
-DEBUG = False
+DEBUG = True
 
 # SECRET_KEY must be set via environment variable in production
 SECRET_KEY = os.getenv('SECRET_KEY')

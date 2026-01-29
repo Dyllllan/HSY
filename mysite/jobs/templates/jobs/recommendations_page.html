@@ -416,9 +416,24 @@
                             </div>
                             
                             <div class="job-actions">
-                                <a href="{% pageurl job %}" class="btn btn-primary btn-recommended">
+                                {# 直接使用 url_path，因为 pageurl 可能因为 Site 配置问题返回 None #}
+                                {% if job.url_path %}
+                                <a href="{{ job.url_path }}" class="btn btn-primary btn-recommended">
                                     <i class="bi bi-eye me-1"></i>查看详情
                                 </a>
+                                {% else %}
+                                {# 如果 url_path 为空，尝试使用 pageurl #}
+                                {% pageurl job as job_url %}
+                                {% if job_url %}
+                                <a href="{{ job_url }}" class="btn btn-primary btn-recommended">
+                                    <i class="bi bi-eye me-1"></i>查看详情
+                                </a>
+                                {% else %}
+                                <span class="btn btn-secondary btn-recommended" title="该职位链接无效（ID: {{ job.id }}）">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>链接无效
+                                </span>
+                                {% endif %}
+                                {% endif %}
                                 {% if user.is_authenticated %}
                                 <button class="btn btn-outline-secondary btn-recommended save-job" data-job-id="{{ job.id }}" title="收藏职位">
                                     <i class="bi bi-bookmark me-1"></i>收藏
