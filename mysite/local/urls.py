@@ -8,6 +8,7 @@ from wagtail.documents import urls as wagtaildocs_urls
 
 from search import views as search_views
 from jobs import views as jobs_views
+from jobs import api as jobs_api
 
 urlpatterns = [
     path("django-admin/", admin.site.urls),
@@ -21,6 +22,7 @@ urlpatterns = [
     path("accounts/dashboard/", jobs_views.dashboard, name="dashboard"),
     path("accounts/profile/", jobs_views.profile_page, name="account_profile"),
     path("accounts/profile/edit/", jobs_views.edit_profile, name="edit_profile"),
+    path("accounts/saved-jobs/", jobs_views.saved_jobs_list, name="saved_jobs_list"),
     path("api/upload-avatar/", jobs_views.upload_avatar_api, name="upload_avatar_api"),
     # 地点数据API
     path("api/location-data/", jobs_views.get_location_data, name="location_data"),
@@ -28,6 +30,8 @@ urlpatterns = [
     path("recommendations/", jobs_views.ai_career_navigation, name="ai_career_navigation"),
     path("api/upload-resume/", jobs_views.upload_resume_api, name="upload_resume_api"),
     path("api/analyze-resume/", jobs_views.analyze_resume_api, name="analyze_resume_api"),
+    # 收藏职位API
+    path("api/toggle-save-job/", jobs_api.toggle_save_job, name="toggle_save_job"),
 ]
 
 # 在 DEBUG 模式下添加静态文件服务

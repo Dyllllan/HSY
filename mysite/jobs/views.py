@@ -151,6 +151,34 @@ def profile_page(request):
         'graduation_label': graduation_label,
     })
 
+
+@login_required
+def saved_jobs_list(request):
+    """收藏职位列表页面"""
+    user = request.user
+    
+    # 获取用户收藏的所有职位
+    saved_applications = JobApplication.objects.filter(
+        user=user,
+        status='saved'
+    ).select_related('job_page').order_by('-created_at')
+    
+    # 分页
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    paginator = Paginator(saved_applications, 15)
+    page = request.GET.get('page')
+    try:
+        saved_applications = paginator.page(page)
+    except PageNotAnInteger:
+        saved_applications = paginator.page(1)
+    except EmptyPage:
+        saved_applications = paginator.page(paginator.num_pages)
+    
+    return render(request, 'jobs/account/saved_jobs_list.html', {
+        'saved_applications': saved_applications,
+        'total_count': paginator.count,
+    })
+
 @login_required
 def edit_profile(request):
     """编辑个人档案页面"""

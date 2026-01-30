@@ -282,6 +282,41 @@
         color: #FF4444;
     }
     
+    .save-job-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid #E0E0E0;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        padding: 0;
+    }
+    
+    .save-job-btn:hover {
+        background: #F5F5F5;
+        border-color: #9C88FF;
+    }
+    
+    .save-job-btn.saved {
+        background: #9C88FF;
+        border-color: #9C88FF;
+        color: #ffffff;
+    }
+    
+    .save-job-btn i {
+        font-size: 18px;
+        color: #666666;
+    }
+    
+    .save-job-btn.saved i {
+        color: #ffffff;
+    }
+    
     /* 底部导航栏 */
     /* 底部导航栏 */
     .bottom-nav {
@@ -391,9 +426,16 @@
                     <div class="job-title">{{ job.job_title }}</div>
                     <div class="job-company">{{ job.company_name }}</div>
                 </div>
-                <div class="match-badge">
-                    <div class="match-icon">DAO</div>
-                    <span>匹配98%</span>
+                <div style="display: flex; align-items: flex-start; gap: 8px;">
+                    <div class="match-badge">
+                        <div class="match-icon">DAO</div>
+                        <span>匹配98%</span>
+                    </div>
+                    {% if user.is_authenticated %}
+                    <button class="save-job-btn" data-job-id="{{ job.id }}" onclick="event.stopPropagation(); toggleSaveJob({{ job.id }}, this);" title="收藏职位">
+                        <i class="bi bi-bookmark{% if job.is_saved_by_user %}-fill{% endif %}"></i>
+                    </button>
+                    {% endif %}
                 </div>
             </div>
             
@@ -458,5 +500,134 @@
             // 这里可以添加AJAX加载职位列表的逻辑
         });
     });
+    
+    // 获取CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    // 收藏/取消收藏职位
+    function toggleSaveJob(jobId, button) {
+        // 防止重复点击
+        if (button.disabled) return;
+        button.disabled = true;
+        
+        const url = '/api/toggle-save-job/';
+        const requestData = {job_id: jobId};
+        
+        console.log('Sending request to:', url, 'with data:', requestData);
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken || '',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData),
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            console.log('Response status:', response.status, response.statusText);
+            console.log('Response headers:', response.headers);
+            
+            // 检查响应状态
+            if (response.status === 401) {
+                // 未登录
+                button.disabled = false;
+                if (confirm('请先登录才能收藏职位，是否前往登录页面？')) {
+                    window.location.href = '/accounts/login/?next=' + encodeURIComponent(window.location.pathname);
+                }
+                return null;
+            }
+            
+            // 检查 Content-Type
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return response.text().then(text => {
+                    console.error('Non-JSON response:', text);
+                    throw new Error('服务器返回了非 JSON 格式的响应');
+                });
+            }
+            
+            if (!response.ok) {
+                return response.json().then(data => {
+                    console.error('Error response:', data);
+                    throw new Error(data.error || `请求失败 (${response.status})`);
+                }).catch(err => {
+                    // 如果 JSON 解析失败，尝试获取文本
+                    return response.text().then(text => {
+                        console.error('Failed to parse error response:', text);
+                        throw new Error(`请求失败 (${response.status}): ${text.substring(0, 100)}`);
+                    });
+                });
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            button.disabled = false;
+            
+            if (!data) return; // 用户取消了登录
+            
+            console.log('Success response:', data);
+            
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            
+            if (data.success) {
+                // 更新按钮状态
+                const icon = button.querySelector('i');
+                if (data.action === 'saved') {
+                    button.classList.add('saved');
+                    if (icon) {
+                        icon.classList.remove('bi-bookmark');
+                        icon.classList.add('bi-bookmark-fill');
+                    }
+                } else {
+                    button.classList.remove('saved');
+                    if (icon) {
+                        icon.classList.remove('bi-bookmark-fill');
+                        icon.classList.add('bi-bookmark');
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            button.disabled = false;
+            console.error('Fetch error:', error);
+            console.error('Error details:', {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            });
+            
+            // 显示更详细的错误信息
+            let errorMessage = '操作失败，请稍后重试';
+            if (error.message) {
+                errorMessage = error.message;
+            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = '网络连接失败，请检查网络连接';
+            } else if (error.name === 'NetworkError') {
+                errorMessage = '网络错误，请检查网络连接';
+            }
+            
+            alert(errorMessage);
+        });
+    }
 </script>
 {% endblock %}

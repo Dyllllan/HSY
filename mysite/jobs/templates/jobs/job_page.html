@@ -505,36 +505,59 @@
         const isActive = btn.classList.contains('active');
         const jobId = {{ page.id }};
         
-        fetch('/api/save-job/', {
+        fetch('/api/toggle-save-job/', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({job_id: jobId})
+            body: JSON.stringify({job_id: jobId}),
+            credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 401) {
+                if (confirm('请先登录才能收藏职位，是否前往登录页面？')) {
+                    window.location.href = '/accounts/login/?next=' + encodeURIComponent(window.location.pathname);
+                }
+                return null;
+            }
+            
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || '请求失败');
+                }).catch(() => {
+                    throw new Error('请求失败');
+                });
+            }
+            
+            return response.json();
+        })
         .then(data => {
+            if (!data) return; // 用户取消了登录
+            
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            
             if (data.success) {
                 // 更新所有收藏按钮状态
                 document.querySelectorAll('.favorite-btn, .btn-collect').forEach(b => {
-                    if (isActive) {
-                        b.classList.remove('active');
-                        const icon = b.querySelector('i');
-                        if (icon) icon.className = 'bi bi-star';
-                    } else {
+                    if (data.action === 'saved') {
                         b.classList.add('active');
                         const icon = b.querySelector('i');
                         if (icon) icon.className = 'bi bi-star-fill';
+                    } else {
+                        b.classList.remove('active');
+                        const icon = b.querySelector('i');
+                        if (icon) icon.className = 'bi bi-star';
                     }
                 });
-            } else {
-                alert(data.message || '操作失败，请重试');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('网络错误，请重试');
+            alert(error.message || '操作失败，请稍后重试');
         });
         {% else %}
         window.location.href = '{% url "account_login" %}?next={{ request.path }}';

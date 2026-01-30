@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags %}
+
+{% block title %}收藏的职位 - 学生求职{% endblock %}
+
+{% block body_class %}saved-jobs-page{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<style>
+    body.saved-jobs-page {
+        background: #F5F5F5;
+        padding-bottom: 60px;
+    }
+    
+    .page-header {
+        background: #ffffff;
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .back-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #F5F5F5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #333333;
+        flex-shrink: 0;
+    }
+    
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #000000;
+        flex: 1;
+    }
+    
+    .jobs-list {
+        padding: 0 16px;
+    }
+    
+    .job-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        position: relative;
+    }
+    
+    .job-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+    
+    .job-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #000000;
+        margin-bottom: 4px;
+    }
+    
+    .job-company {
+        font-size: 14px;
+        color: #999999;
+    }
+    
+    .job-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid #E0E0E0;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: #666666;
+    }
+    
+    .btn-action:hover {
+        background: #F5F5F5;
+        border-color: #9C88FF;
+        color: #9C88FF;
+    }
+    
+    .btn-action.saved {
+        background: #9C88FF;
+        border-color: #9C88FF;
+        color: #ffffff;
+    }
+    
+    .job-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #F5F5F5;
+    }
+    
+    .job-location {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        color: #666666;
+    }
+    
+    .job-salary {
+        font-size: 15px;
+        font-weight: 600;
+        color: #FF4444;
+    }
+    
+    .job-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+    
+    .tag {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+    }
+    
+    .tag-orange {
+        background: #FF6B35;
+        color: #ffffff;
+    }
+    
+    .tag-grey {
+        background: #F5F5F5;
+        color: #666666;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999999;
+    }
+    
+    .empty-state i {
+        font-size: 64px;
+        opacity: 0.3;
+        margin-bottom: 16px;
+    }
+    
+    .empty-state p {
+        font-size: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 20px;
+    }
+    
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #333333;
+        background: #ffffff;
+        border: 1px solid #E0E0E0;
+    }
+    
+    .pagination .current {
+        background: #9C88FF;
+        color: #ffffff;
+        border-color: #9C88FF;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 页面头部 -->
+<div class="page-header">
+    <a href="{% url 'account_profile' %}" class="back-btn">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="page-title">收藏的职位</h1>
+    <span style="color: #999999; font-size: 14px;">共{{ total_count }}个</span>
+</div>
+
+<!-- 职位列表 -->
+<div class="jobs-list">
+    {% if saved_applications %}
+        {% for app in saved_applications %}
+        <div class="job-card">
+            <div class="job-header">
+                <div style="flex: 1;">
+                    <div class="job-title">{{ app.job_page.job_title }}</div>
+                    <div class="job-company">{{ app.job_page.company_name }}</div>
+                </div>
+                <div class="job-actions">
+                    <a href="{% pageurl app.job_page %}" class="btn-action" title="查看详情">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <button class="btn-action saved save-job" data-job-id="{{ app.job_page.id }}" title="取消收藏">
+                        <i class="bi bi-bookmark-fill"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="job-tags">
+                {% if app.job_page.job_type == 'intern' %}
+                <span class="tag tag-orange">实习</span>
+                {% elif app.job_page.job_type == 'fulltime' %}
+                <span class="tag tag-orange">全职</span>
+                {% elif app.job_page.job_type == 'parttime' %}
+                <span class="tag tag-orange">兼职</span>
+                {% endif %}
+                <span class="tag tag-grey">{{ app.job_page.source_website }}</span>
+            </div>
+            
+            <div class="job-info">
+                <div class="job-location">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>{{ app.job_page.location }}</span>
+                </div>
+                <div class="job-salary">
+                    {% if app.job_page.salary %}{{ app.job_page.salary }}{% else %}面议{% endif %}
+                </div>
+            </div>
+            
+            <div style="margin-top: 8px; font-size: 12px; color: #999999;">
+                收藏于 {{ app.created_at|date:"Y-m-d H:i" }}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- 分页 -->
+        {% if saved_applications.has_other_pages %}
+        <div class="pagination">
+            {% if saved_applications.has_previous %}
+            <a href="?page={{ saved_applications.previous_page_number }}">上一页</a>
+            {% endif %}
+            
+            <span class="current">第 {{ saved_applications.number }} 页 / 共 {{ saved_applications.paginator.num_pages }} 页</span>
+            
+            {% if saved_applications.has_next %}
+            <a href="?page={{ saved_applications.next_page_number }}">下一页</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-bookmark"></i>
+        <p>还没有收藏任何职位</p>
+        <a href="/jobs/" class="btn-action" style="display: inline-flex; width: auto; padding: 12px 24px;">
+            去发现职位
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // 获取CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    // 收藏/取消收藏功能
+    document.querySelectorAll('.save-job').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            const jobId = this.dataset.jobId;
+            const button = this;
+            
+            fetch('/api/toggle-save-job/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({job_id: jobId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.action === 'unsaved') {
+                    // 移除卡片
+                    button.closest('.job-card').style.transition = 'opacity 0.3s';
+                    button.closest('.job-card').style.opacity = '0';
+                    setTimeout(() => {
+                        button.closest('.job-card').remove();
+                        // 如果列表为空，显示空状态
+                        if (document.querySelectorAll('.job-card').length === 0) {
+                            location.reload();
+                        }
+                    }, 300);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('操作失败，请稍后重试');
+            });
+        });
+    });
+</script>
+{% endblock %}
