@@ -1,0 +1,565 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags %}
+{% load static %}
+
+{% block title %}AI职场导航{% endblock %}
+
+{% block body_class %}ai-career-navigation{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<style>
+    body.ai-career-navigation {
+        background: #ffffff;
+        min-height: 100vh;
+        padding-bottom: 60px; /* 为底部导航栏留出空间 */
+    }
+    
+    /* 页面标题区域 */
+    .page-header {
+        text-align: center;
+        padding: 40px 20px 30px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #333333;
+        margin-bottom: 12px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: #999999;
+        line-height: 1.6;
+    }
+    
+    /* 三步流程 */
+    .process-steps {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 20px 40px;
+        gap: 8px;
+    }
+    
+    .process-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        max-width: 100px;
+    }
+    
+    .step-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        position: relative;
+    }
+    
+    .step-icon-wrapper.active {
+        background: rgba(156, 136, 255, 0.15);
+        border: 2px solid #9C88FF;
+    }
+    
+    .step-icon-wrapper.inactive {
+        background: #F5F5F5;
+        border: 2px solid #E0E0E0;
+    }
+    
+    .step-icon {
+        font-size: 28px;
+        color: #9C88FF;
+    }
+    
+    .step-icon-wrapper.inactive .step-icon {
+        color: #999999;
+    }
+    
+    .step-label {
+        font-size: 13px;
+        color: #9C88FF;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .step-label.inactive {
+        color: #999999;
+    }
+    
+    .step-arrow {
+        width: 20px;
+        height: 2px;
+        background: #E0E0E0;
+        position: relative;
+        margin: 0 4px;
+    }
+    
+    .step-arrow::after {
+        content: '';
+        position: absolute;
+        right: -4px;
+        top: -3px;
+        width: 0;
+        height: 0;
+        border-left: 6px solid #E0E0E0;
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+    }
+    
+    .step-arrow.active {
+        background: #9C88FF;
+    }
+    
+    .step-arrow.active::after {
+        border-left-color: #9C88FF;
+    }
+    
+    /* 简历上传区域 */
+    .upload-section {
+        padding: 0 20px 30px;
+    }
+    
+    .upload-area {
+        border: 2px dashed #9C88FF;
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+    }
+    
+    .upload-area:hover {
+        border-color: #7A6BCC;
+        background: #FAF9FF;
+    }
+    
+    .upload-area.dragover {
+        border-color: #7A6BCC;
+        background: #F5F0FF;
+    }
+    
+    .upload-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(156, 136, 255, 0.1);
+        border-radius: 12px;
+    }
+    
+    .upload-icon i {
+        font-size: 48px;
+        color: #9C88FF;
+    }
+    
+    .upload-text {
+        font-size: 16px;
+        font-weight: 600;
+        color: #9C88FF;
+        margin-bottom: 16px;
+    }
+    
+    .upload-hint {
+        font-size: 12px;
+        color: #999999;
+        margin-bottom: 12px;
+    }
+    
+    .privacy-pledge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #52C41A;
+        margin-top: 16px;
+    }
+    
+    .privacy-pledge i {
+        font-size: 14px;
+    }
+    
+    /* 隐藏的文件输入 */
+    #resume-file-input {
+        display: none;
+    }
+    
+    /* AI报告区域 */
+    .report-section {
+        padding: 0 20px;
+        margin-top: 20px;
+    }
+    
+    .report-container {
+        background: #333333;
+        border-radius: 16px;
+        padding: 20px;
+        min-height: 300px;
+        display: none;
+    }
+    
+    .report-container.show {
+        display: block;
+    }
+    
+    .report-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 16px;
+    }
+    
+    .report-content {
+        color: #ffffff;
+        font-size: 14px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+    }
+    
+    .report-loading {
+        text-align: center;
+        color: #999999;
+        padding: 40px 20px;
+    }
+    
+    .report-loading i {
+        font-size: 32px;
+        margin-bottom: 12px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .report-error {
+        color: #ff4d4f;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    /* 底部导航栏 */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #E0E0E0;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0 8px 0;
+        z-index: 1000;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        min-height: 60px;
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 16px;
+        color: #999999;
+        text-decoration: none;
+        font-size: 12px;
+        transition: color 0.2s;
+        min-height: 50px;
+    }
+    
+    .nav-item.active {
+        color: #6B8E9F;
+    }
+    
+    .nav-icon {
+        font-size: 22px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 页面标题 -->
+<div class="page-header">
+    <h1 class="page-title">开启你的AI职场导航</h1>
+    <p class="page-subtitle">只需3秒,从万千岗位中选出最适合你的那个</p>
+</div>
+
+<!-- 三步流程 -->
+<div class="process-steps">
+    <div class="process-step">
+        <div class="step-icon-wrapper active" id="step-1">
+            <i class="bi bi-cloud-upload step-icon"></i>
+        </div>
+        <span class="step-label" id="label-1">上传简历</span>
+    </div>
+    <div class="step-arrow" id="arrow-1"></div>
+    <div class="process-step">
+        <div class="step-icon-wrapper inactive" id="step-2">
+            <i class="bi bi-lightning-charge step-icon"></i>
+        </div>
+        <span class="step-label inactive" id="label-2">深度解析</span>
+    </div>
+    <div class="step-arrow inactive" id="arrow-2"></div>
+    <div class="process-step">
+        <div class="step-icon-wrapper inactive" id="step-3">
+            <i class="bi bi-star step-icon"></i>
+        </div>
+        <span class="step-label inactive" id="label-3">获取推荐</span>
+    </div>
+</div>
+
+<!-- 简历上传区域 -->
+<div class="upload-section">
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('resume-file-input').click()">
+        <div class="upload-icon">
+            <i class="bi bi-cloud-upload"></i>
+        </div>
+        <div class="upload-text">点击上传简历</div>
+        <div class="upload-hint">支持 PDF、DOCX 格式</div>
+        <div class="privacy-pledge">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>隐私保护承诺:你的简历仅用于匹配</span>
+        </div>
+    </div>
+    <input type="file" id="resume-file-input" accept=".pdf,.docx" />
+</div>
+
+<!-- AI报告区域 -->
+<div class="report-section">
+    <div class="report-container" id="report-container">
+        <div class="report-title">AI职场竞争力报告</div>
+        <div class="report-content" id="report-content"></div>
+        <div class="report-loading" id="report-loading" style="display: none;">
+            <i class="bi bi-arrow-repeat"></i>
+            <div>正在分析简历，请稍候...</div>
+        </div>
+        <div class="report-error" id="report-error" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    // 获取CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('resume-file-input');
+    const reportContainer = document.getElementById('report-container');
+    const reportContent = document.getElementById('report-content');
+    const reportLoading = document.getElementById('report-loading');
+    const reportError = document.getElementById('report-error');
+    
+    // 文件选择处理
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    });
+    
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && (file.type === 'application/pdf' || file.name.endsWith('.docx'))) {
+            handleFileUpload(file);
+        } else {
+            alert('请上传 PDF 或 DOCX 格式的简历文件');
+        }
+    });
+    
+    // 处理文件上传
+    function handleFileUpload(file) {
+        // 验证文件类型
+        const validTypes = ['application/pdf'];
+        const validExtensions = ['.pdf', '.docx'];
+        const fileName = file.name.toLowerCase();
+        const isValidType = validTypes.includes(file.type) || validExtensions.some(ext => fileName.endsWith(ext));
+        
+        if (!isValidType) {
+            alert('请上传 PDF 或 DOCX 格式的简历文件');
+            return;
+        }
+        
+        // 验证文件大小（限制为10MB）
+        if (file.size > 10 * 1024 * 1024) {
+            alert('文件大小不能超过 10MB');
+            return;
+        }
+        
+        // 更新UI状态
+        updateStepProgress(1);
+        uploadArea.style.pointerEvents = 'none';
+        uploadArea.style.opacity = '0.6';
+        
+        // 上传文件
+        const formData = new FormData();
+        formData.append('resume', file);
+        
+        // 显示报告容器和加载状态
+        reportContainer.classList.add('show');
+        reportContent.style.display = 'none';
+        reportError.style.display = 'none';
+        reportLoading.style.display = 'block';
+        
+        fetch('/api/upload-resume/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateStepProgress(2);
+                // 调用AI分析接口
+                analyzeResume(data.file_id);
+            } else {
+                showError(data.message || '文件上传失败，请重试');
+                resetUploadArea();
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            showError('网络错误，请重试');
+            resetUploadArea();
+        });
+    }
+    
+    // 分析简历
+    function analyzeResume(fileId) {
+        fetch('/api/analyze-resume/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({file_id: fileId})
+        })
+        .then(response => response.json())
+        .then(data => {
+            reportLoading.style.display = 'none';
+            if (data.success) {
+                updateStepProgress(3);
+                // 显示报告内容
+                reportContent.textContent = data.report || '分析完成，但未生成报告内容。';
+                reportContent.style.display = 'block';
+            } else {
+                showError(data.message || '简历分析失败，请重试');
+            }
+        })
+        .catch(error => {
+            console.error('Analysis error:', error);
+            reportLoading.style.display = 'none';
+            showError('网络错误，请重试');
+        });
+    }
+    
+    // 更新步骤进度
+    function updateStepProgress(step) {
+        // 激活当前步骤
+        const stepWrapper = document.getElementById(`step-${step}`);
+        const stepLabel = document.getElementById(`label-${step}`);
+        const stepArrow = document.getElementById(`arrow-${step}`);
+        
+        if (stepWrapper) {
+            stepWrapper.classList.remove('inactive');
+            stepWrapper.classList.add('active');
+        }
+        if (stepLabel) {
+            stepLabel.classList.remove('inactive');
+        }
+        if (stepArrow) {
+            stepArrow.classList.remove('inactive');
+            stepArrow.classList.add('active');
+        }
+        
+        // 激活之前的步骤
+        for (let i = 1; i < step; i++) {
+            const prevWrapper = document.getElementById(`step-${i}`);
+            const prevLabel = document.getElementById(`label-${i}`);
+            const prevArrow = document.getElementById(`arrow-${i}`);
+            
+            if (prevWrapper) {
+                prevWrapper.classList.remove('inactive');
+                prevWrapper.classList.add('active');
+            }
+            if (prevLabel) {
+                prevLabel.classList.remove('inactive');
+            }
+            if (prevArrow) {
+                prevArrow.classList.remove('inactive');
+                prevArrow.classList.add('active');
+            }
+        }
+    }
+    
+    // 显示错误
+    function showError(message) {
+        reportError.textContent = message;
+        reportError.style.display = 'block';
+    }
+    
+    // 重置上传区域
+    function resetUploadArea() {
+        uploadArea.style.pointerEvents = 'auto';
+        uploadArea.style.opacity = '1';
+        fileInput.value = '';
+    }
+</script>
+
+<!-- 底部导航栏 -->
+<nav class="bottom-nav">
+    <a href="/" class="nav-item">
+        <i class="bi bi-house-fill nav-icon"></i>
+        <span>首页</span>
+    </a>
+    <a href="/recommendations/" class="nav-item active">
+        <i class="bi bi-stars nav-icon"></i>
+        <span>AI 规划</span>
+    </a>
+    <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}{% endif %}" class="nav-item">
+        <i class="bi bi-person nav-icon"></i>
+        <span>我的</span>
+    </a>
+</nav>
+{% endblock %}

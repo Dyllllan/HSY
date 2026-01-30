@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}我的 - 学生求职{% endblock %}
+
+{% block body_class %}profile-page{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<style>
+    body.profile-page {
+        background: #F5F5F5;
+        padding-bottom: 60px; /* 为底部导航栏留出空间 */
+    }
+    
+    /* 用户信息区域 */
+    .profile-header {
+        background: #ffffff;
+        padding: 20px 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .avatar-container {
+        position: relative;
+        flex-shrink: 0;
+    }
+    
+    .avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #E0E0E0;
+    }
+    
+    .avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #E0E0E0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999999;
+        font-size: 32px;
+        border: 2px solid #E0E0E0;
+    }
+    
+    .avatar-upload-btn {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #9C88FF;
+        border: 2px solid #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+    
+    .avatar-upload-btn i {
+        color: #ffffff;
+        font-size: 14px;
+    }
+    
+    .avatar-status {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #52C41A;
+        border: 2px solid #ffffff;
+    }
+    
+    .user-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .user-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #000000;
+        margin-bottom: 4px;
+    }
+    
+    .user-status {
+        font-size: 14px;
+        color: #6B8E9F;
+    }
+    
+    /* 性能指标区域 */
+    .stats-section {
+        background: #ffffff;
+        padding: 20px 16px;
+        margin-bottom: 12px;
+    }
+    
+    .stats-grid {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    
+    .stat-item {
+        flex: 1;
+        text-align: center;
+        position: relative;
+    }
+    
+    .stat-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1px;
+        height: 40px;
+        background: #E0E0E0;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #000000;
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        font-size: 13px;
+        color: #999999;
+    }
+    
+    /* 功能列表 */
+    .features-section {
+        background: #ffffff;
+        margin-bottom: 12px;
+    }
+    
+    .feature-item {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid #F5F5F5;
+        text-decoration: none;
+        color: #000000;
+        transition: background 0.2s;
+    }
+    
+    .feature-item:last-child {
+        border-bottom: none;
+    }
+    
+    .feature-item:active {
+        background: #F5F5F5;
+    }
+    
+    .feature-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    
+    .feature-icon.blue {
+        background: #E6F4FF;
+        color: #6B8E9F;
+    }
+    
+    .feature-icon.purple {
+        background: #F0E6FF;
+        color: #9C88FF;
+    }
+    
+    .feature-icon.orange {
+        background: #FFF4E6;
+        color: #FF6B35;
+    }
+    
+    .feature-icon i {
+        font-size: 20px;
+    }
+    
+    .feature-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .feature-title {
+        font-size: 15px;
+        font-weight: 500;
+        color: #000000;
+        margin-bottom: 4px;
+    }
+    
+    .feature-subtitle {
+        font-size: 12px;
+        color: #999999;
+    }
+    
+    .feature-arrow {
+        color: #CCCCCC;
+        font-size: 18px;
+        margin-left: 8px;
+        flex-shrink: 0;
+    }
+    
+    /* 退出登录按钮 */
+    .logout-section {
+        padding: 16px;
+    }
+    
+    .btn-logout {
+        width: 100%;
+        height: 48px;
+        background: #F5F5F5;
+        border: none;
+        border-radius: 12px;
+        color: #666666;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-logout:active {
+        background: #E0E0E0;
+    }
+    
+    /* 底部导航栏 */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #E0E0E0;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0 8px 0;
+        z-index: 1000;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        min-height: 60px;
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 16px;
+        color: #999999;
+        text-decoration: none;
+        font-size: 12px;
+        transition: color 0.2s;
+        min-height: 50px;
+    }
+    
+    .nav-item.active {
+        color: #6B8E9F;
+    }
+    
+    .nav-icon {
+        font-size: 22px;
+    }
+    
+    /* 隐藏的文件输入 */
+    #avatar-file-input {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 用户信息区域 -->
+<div class="profile-header">
+    <div class="avatar-container">
+        {% if profile.avatar %}
+        <img src="{{ profile.avatar.url }}" alt="头像" class="avatar" id="avatar-img">
+        {% else %}
+        <div class="avatar-placeholder" id="avatar-placeholder">
+            <i class="bi bi-person"></i>
+        </div>
+        {% endif %}
+        <div class="avatar-status"></div>
+        <div class="avatar-upload-btn" onclick="document.getElementById('avatar-file-input').click()">
+            <i class="bi bi-camera"></i>
+        </div>
+        <input type="file" id="avatar-file-input" accept="image/*" />
+    </div>
+    <div class="user-info">
+        <div class="user-name">{{ user.first_name|default:user.username|default:"校招先锋" }}</div>
+        <div class="user-status">{{ graduation_label|default:"25届准毕业生" }}</div>
+    </div>
+</div>
+
+<!-- 性能指标区域 -->
+<div class="stats-section">
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-value">{{ applied_count|default:12 }}</div>
+            <div class="stat-label">已投递</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ pending_interview_count|default:5 }}</div>
+            <div class="stat-label">待面试</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ competitiveness|default:92 }}</div>
+            <div class="stat-label">平均竞争力</div>
+        </div>
+    </div>
+</div>
+
+<!-- 功能列表 -->
+<div class="features-section">
+    <a href="#" class="feature-item">
+        <div class="feature-icon blue">
+            <i class="bi bi-file-earmark-pdf"></i>
+        </div>
+        <div class="feature-content">
+            <div class="feature-title">附件简历库</div>
+            <div class="feature-subtitle">
+                {% if profile.resume %}
+                已上传1份 {{ profile.resume.name|slice:"-4:"|upper }}
+                {% else %}
+                未上传简历
+                {% endif %}
+            </div>
+        </div>
+        <i class="bi bi-chevron-right feature-arrow"></i>
+    </a>
+    
+    <a href="/recommendations/" class="feature-item">
+        <div class="feature-icon purple">
+            <i class="bi bi-stars"></i>
+        </div>
+        <div class="feature-content">
+            <div class="feature-title">AI 能力测评中心</div>
+            <div class="feature-subtitle">解锁你的职场潜力</div>
+        </div>
+        <i class="bi bi-chevron-right feature-arrow"></i>
+    </a>
+    
+    <a href="{% url 'dashboard' %}" class="feature-item">
+        <div class="feature-icon orange">
+            <i class="bi bi-check-square"></i>
+        </div>
+        <div class="feature-content">
+            <div class="feature-title">投递进度跟踪</div>
+            <div class="feature-subtitle">实时掌控反馈</div>
+        </div>
+        <i class="bi bi-chevron-right feature-arrow"></i>
+    </a>
+</div>
+
+<!-- 退出登录按钮 -->
+<div class="logout-section">
+    <form method="post" action="{% url 'account_logout' %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="btn-logout">退出登录</button>
+    </form>
+</div>
+
+<!-- 底部导航栏 -->
+<nav class="bottom-nav">
+    <a href="/" class="nav-item">
+        <i class="bi bi-house-fill nav-icon"></i>
+        <span>首页</span>
+    </a>
+    <a href="/recommendations/" class="nav-item">
+        <i class="bi bi-stars nav-icon"></i>
+        <span>AI 规划</span>
+    </a>
+    <a href="{% url 'account_profile' %}" class="nav-item active">
+        <i class="bi bi-person nav-icon"></i>
+        <span>我的</span>
+    </a>
+</nav>
+
+<script>
+    // 获取CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    // 头像上传处理
+    const avatarInput = document.getElementById('avatar-file-input');
+    const avatarImg = document.getElementById('avatar-img');
+    const avatarPlaceholder = document.getElementById('avatar-placeholder');
+    
+    avatarInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // 验证文件类型
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件');
+                return;
+            }
+            
+            // 验证文件大小（5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片大小不能超过 5MB');
+                return;
+            }
+            
+            // 上传文件
+            const formData = new FormData();
+            formData.append('avatar', file);
+            
+            fetch('/api/upload-avatar/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 更新头像显示
+                    if (avatarPlaceholder) {
+                        avatarPlaceholder.style.display = 'none';
+                    }
+                    if (avatarImg) {
+                        avatarImg.src = data.avatar_url + '?t=' + new Date().getTime();
+                        avatarImg.style.display = 'block';
+                    } else {
+                        // 创建新的img元素
+                        const newImg = document.createElement('img');
+                        newImg.src = data.avatar_url + '?t=' + new Date().getTime();
+                        newImg.alt = '头像';
+                        newImg.className = 'avatar';
+                        newImg.id = 'avatar-img';
+                        avatarPlaceholder.parentElement.insertBefore(newImg, avatarPlaceholder);
+                        avatarPlaceholder.style.display = 'none';
+                    }
+                    alert('头像上传成功');
+                } else {
+                    alert(data.message || '上传失败，请重试');
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                alert('网络错误，请重试');
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -9,6 +9,9 @@ from wagtail.admin.menu import MenuItem
 from django.urls import reverse, path
 from django.db.models import Count
 from django.utils.html import format_html
+from django.http import FileResponse, Http404
+from django.conf import settings
+import os
 
 @hooks.register('register_admin_menu_item')
 def register_job_stats_menu_item():
@@ -62,7 +65,7 @@ class StudentProfileViewSet(SnippetViewSet):
     add_to_settings_menu = False
     exclude_from_explorer = False
     
-    list_display = ['user', 'school', 'major', 'graduation_year', 'is_verified', 'last_active']
+    list_display = ['user', 'school', 'major', 'graduation_year', 'resume_status', 'is_verified', 'last_active']
     list_filter = ['school', 'major', 'graduation_year', 'is_verified', 'created_at']
     search_fields = ['user__username', 'user__email', 'student_id', 'resume_text']
     
@@ -87,6 +90,7 @@ class StudentProfileViewSet(SnippetViewSet):
         
         ObjectList([
             FieldPanel('resume'),
+            FieldPanel('resume_info_display', read_only=True),
             FieldPanel('resume_text'),
         ], heading='简历资料'),
         
@@ -151,3 +155,33 @@ class StudentProfileViewSet(SnippetViewSet):
 
 # 注册到Wagtail后台
 register_snippet(StudentProfileViewSet)
+
+# 添加简历下载视图
+@hooks.register('register_admin_urls')
+def register_resume_download_url():
+    """注册简历下载URL"""
+    def download_resume(request, profile_id):
+        """下载简历文件"""
+        try:
+            profile = StudentProfile.objects.get(pk=profile_id)
+            if not profile.resume:
+                raise Http404("简历文件不存在")
+            
+            file_path = profile.resume.path
+            if not os.path.exists(file_path):
+                raise Http404("文件不存在")
+            
+            file_name = os.path.basename(profile.resume.name)
+            return FileResponse(
+                open(file_path, 'rb'),
+                as_attachment=True,
+                filename=file_name
+            )
+        except StudentProfile.DoesNotExist:
+            raise Http404("学生档案不存在")
+        except Exception as e:
+            raise Http404(f"下载失败: {str(e)}")
+    
+    return [
+        path('student-profile/<int:profile_id>/download-resume/', download_resume, name='admin_download_resume'),
+    ]

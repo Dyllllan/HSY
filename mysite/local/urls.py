@@ -19,9 +19,15 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # 用户工作台和个人档案
     path("accounts/dashboard/", jobs_views.dashboard, name="dashboard"),
-    path("accounts/profile/", jobs_views.edit_profile, name="account_profile"),
+    path("accounts/profile/", jobs_views.profile_page, name="account_profile"),
+    path("accounts/profile/edit/", jobs_views.edit_profile, name="edit_profile"),
+    path("api/upload-avatar/", jobs_views.upload_avatar_api, name="upload_avatar_api"),
     # 地点数据API
     path("api/location-data/", jobs_views.get_location_data, name="location_data"),
+    # AI职场导航
+    path("recommendations/", jobs_views.ai_career_navigation, name="ai_career_navigation"),
+    path("api/upload-resume/", jobs_views.upload_resume_api, name="upload_resume_api"),
+    path("api/analyze-resume/", jobs_views.analyze_resume_api, name="analyze_resume_api"),
 ]
 
 # 在 DEBUG 模式下添加静态文件服务

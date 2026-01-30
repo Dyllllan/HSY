@@ -504,6 +504,21 @@ class StudentProfile(models.Model):
         help_text='可选，用于身份验证'
     )
     
+    phone = models.CharField(
+        '联系电话',
+        max_length=20,
+        blank=True,
+        help_text='手机号码'
+    )
+    
+    avatar = models.ImageField(
+        '头像',
+        upload_to='student_avatars/%Y/%m/',
+        blank=True,
+        null=True,
+        help_text='用户头像图片'
+    )
+    
     SCHOOL_CHOICES = [
         ('tsinghua', '清华大学'),
         ('pku', '北京大学'),
@@ -596,6 +611,121 @@ class StudentProfile(models.Model):
     def user_email(self):
         """获取用户邮箱"""
         return self.user.email if self.user else "-"
+    
+    def resume_status(self):
+        """显示简历状态（用于列表页）"""
+        if not self.resume:
+            return "未上传"
+        
+        import os
+        from django.utils.html import format_html
+        from django.urls import reverse
+        
+        try:
+            file_size = self.resume.size
+            file_name = os.path.basename(self.resume.name)
+            file_ext = os.path.splitext(file_name)[1].upper()
+            
+            # 格式化文件大小
+            if file_size < 1024:
+                size_str = f"{file_size} B"
+            elif file_size < 1024 * 1024:
+                size_str = f"{file_size / 1024:.1f} KB"
+            else:
+                size_str = f"{file_size / (1024 * 1024):.1f} MB"
+            
+            # 生成下载链接
+            download_url = reverse('admin_download_resume', args=[self.pk])
+            
+            html = f"""
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: #28a745; font-weight: bold;">✓ 已上传</span>
+                <span style="color: #666; font-size: 12px;">{file_ext} · {size_str}</span>
+                <a href="{download_url}" target="_blank" 
+                   style="color: #007cba; text-decoration: none; font-size: 12px;"
+                   title="下载简历">
+                    <span style="margin-left: 4px;">📥</span>
+                </a>
+            </div>
+            """
+            return format_html(html)
+        except Exception as e:
+            return format_html('<span style="color: #dc3545;">文件错误</span>')
+    
+    resume_status.short_description = '简历状态'
+    resume_status.admin_order_field = 'resume'
+    
+    @property
+    def resume_info_display(self):
+        """用于Wagtail后台显示的简历信息"""
+        if not self.resume:
+            return "未上传简历"
+        
+        import os
+        from django.utils.html import format_html
+        from django.urls import reverse
+        
+        try:
+            file_size = self.resume.size
+            file_name = os.path.basename(self.resume.name)
+            file_ext = os.path.splitext(file_name)[1].upper()
+            
+            # 格式化文件大小
+            if file_size < 1024:
+                size_str = f"{file_size} B"
+            elif file_size < 1024 * 1024:
+                size_str = f"{file_size / 1024:.1f} KB"
+            else:
+                size_str = f"{file_size / (1024 * 1024):.1f} MB"
+            
+            # 获取文件修改时间
+            try:
+                file_path = self.resume.path
+                from datetime import datetime
+                mtime = os.path.getmtime(file_path)
+                upload_time = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
+            except:
+                upload_time = "未知"
+            
+            download_url = reverse('admin_download_resume', args=[self.pk])
+            
+            html = f"""
+            <div style="padding: 15px; background-color: #f9f9f9; border-radius: 5px; margin: 10px 0;">
+                <h4 style="margin-top: 0; margin-bottom: 12px;">简历文件信息</h4>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold; width: 120px;">文件名：</td>
+                        <td style="padding: 8px; word-break: break-all;">{file_name}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">文件类型：</td>
+                        <td style="padding: 8px;"><span style="color: #007cba; font-weight: bold;">{file_ext}</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">文件大小：</td>
+                        <td style="padding: 8px;"><span style="color: #28a745; font-weight: bold;">{size_str}</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">上传时间：</td>
+                        <td style="padding: 8px;">{upload_time}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold;">操作：</td>
+                        <td style="padding: 8px;">
+                            <a href="{download_url}" target="_blank" 
+                               style="display: inline-block; padding: 6px 12px; background-color: #007cba; 
+                                      color: white; text-decoration: none; border-radius: 4px; font-size: 13px;">
+                                📥 下载简历
+                            </a>
+                            {f'<a href="{self.resume.url}" target="_blank" style="display: inline-block; margin-left: 8px; padding: 6px 12px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 13px;">👁️ 预览</a>' if hasattr(self.resume, 'url') else ''}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            """
+            return format_html(html)
+        except Exception as e:
+            return format_html(f'<div style="color: #dc3545;">无法加载简历信息: {str(e)}</div>')
     
     @property
     def user_full_name(self):

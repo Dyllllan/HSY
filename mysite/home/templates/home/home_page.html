@@ -1,167 +1,462 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static wagtailcore_tags %}
 
-{% block body_class %}template-homepage{% endblock %}
+{% block body_class %}template-homepage mobile-homepage{% endblock %}
 
 {% block extra_css %}
-<!-- Bootstrap 5 CSS -->
-<link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
-<!-- 首页自定义样式 -->
-<link rel="stylesheet" href="{% static 'css/homepage.css' %}">
 <style>
-    /* 确保整个页面背景都是彩色 */
-    body.template-homepage {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
-        background-size: 400% 400%;
-        animation: gradientShift 15s ease infinite;
-        min-height: 100vh;
+    /* 移动端首页样式 */
+    body.mobile-homepage {
+        background: #ffffff;
+        padding-bottom: 60px; /* 为底部导航栏留出空间 */
     }
     
-    @keyframes gradientShift {
-        0% {
-            background-position: 0% 50%;
+    /* 顶部搜索栏 */
+    .mobile-search-bar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: #ffffff;
+        padding: 12px 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .search-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        color: #6B8E9F;
+        font-size: 18px;
+        z-index: 1;
+    }
+    
+    .search-input {
+        width: 100%;
+        height: 40px;
+        padding: 0 12px 0 40px;
+        border: 1px solid #E0E0E0;
+        border-radius: 20px;
+        font-size: 14px;
+        background: #F5F5F5;
+        outline: none;
+    }
+    
+    .search-input:focus {
+        background: #ffffff;
+        border-color: #6B8E9F;
+    }
+    
+    /* 分类筛选 */
+    .category-filters {
+        padding: 12px 16px;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    
+    .category-filters::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .category-btn {
+        display: inline-block;
+        padding: 6px 16px;
+        margin-right: 8px;
+        border: 1px solid #E0E0E0;
+        border-radius: 16px;
+        background: #ffffff;
+        color: #333333;
+        font-size: 14px;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    
+    .category-btn.active {
+        background: #6B8E9F;
+        color: #ffffff;
+        border-color: #6B8E9F;
+    }
+    
+    /* AI推荐横幅 */
+    .ai-banner {
+        margin: 16px;
+        padding: 16px;
+        background: linear-gradient(135deg, #E3F2FD 0%, #E8F5E9 100%);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ai-banner::before {
+        content: 'MODAO.CC';
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 48px;
+        color: rgba(74, 144, 226, 0.1);
+        font-weight: bold;
+        pointer-events: none;
+    }
+    
+    .ai-banner-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333333;
+        margin-bottom: 8px;
+    }
+    
+    .ai-banner-text {
+        font-size: 13px;
+        color: #666666;
+        margin-bottom: 12px;
+        line-height: 1.5;
+    }
+    
+    .ai-banner-text .highlight {
+        color: #6B8E9F;
+        font-weight: 500;
+    }
+    
+    .ai-upload-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border: 1px solid #6B8E9F;
+        border-radius: 20px;
+        background: #ffffff;
+        color: #6B8E9F;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    
+    .ai-upload-btn:hover {
+        background: #6B8E9F;
+        color: #ffffff;
+    }
+    
+    /* 热门岗位区域 */
+    .jobs-section {
+        padding: 0 16px 16px;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333333;
+    }
+    
+    .section-subtitle {
+        font-size: 12px;
+        color: #999999;
+    }
+    
+    /* 职位卡片 */
+    .job-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .job-card:active {
+        transform: scale(0.98);
+    }
+    
+    .job-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+    
+    .job-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333333;
+        margin-bottom: 4px;
+    }
+    
+    .job-company {
+        font-size: 13px;
+        color: #999999;
+    }
+    
+    .match-badge {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        background: #6B8E9F;
+        border-radius: 12px;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .match-icon {
+        width: 16px;
+        height: 16px;
+        background: #ffffff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: #6B8E9F;
+    }
+    
+    .job-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+    
+    .tag {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    
+    .tag-orange {
+        background: #FF6B35;
+        color: #ffffff;
+    }
+    
+    .tag-grey {
+        background: #F5F5F5;
+        color: #666666;
+    }
+    
+    .tag-green {
+        background: #4CAF50;
+        color: #ffffff;
+    }
+    
+    .job-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .job-location {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: #666666;
+    }
+    
+    .job-salary {
+        font-size: 14px;
+        font-weight: 600;
+        color: #FF4444;
+    }
+    
+    /* 底部导航栏 */
+    /* 底部导航栏 */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #E0E0E0;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0 8px 0;
+        z-index: 1000;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        min-height: 60px;
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 16px;
+        color: #999999;
+        text-decoration: none;
+        font-size: 12px;
+        transition: color 0.2s;
+        min-height: 50px;
+    }
+    
+    .nav-item.active {
+        color: #6B8E9F;
+    }
+    
+    .nav-icon {
+        font-size: 22px;
+    }
+    
+    /* 响应式调整 */
+    @media (min-width: 768px) {
+        .mobile-search-bar,
+        .category-filters,
+        .jobs-section {
+            max-width: 768px;
+            margin: 0 auto;
         }
-        50% {
-            background-position: 100% 50%;
-        }
-        100% {
-            background-position: 0% 50%;
+        
+        .ai-banner {
+            max-width: 768px;
+            margin: 16px auto;
         }
     }
 </style>
-{% endblock extra_css %}
+{% endblock %}
 
 {% block content %}
-<div class="homepage-hero">
-    <div class="hero-background">
-        <!-- 彩色装饰元素 -->
-        <div class="color-orb orb-1"></div>
-        <div class="color-orb orb-2"></div>
-        <div class="color-orb orb-3"></div>
-        <div class="color-orb orb-4"></div>
-        <div class="color-orb orb-5"></div>
-    </div>
-    <div class="container">
-        <div class="row align-items-center min-vh-100">
-            <div class="col-lg-6 text-center text-lg-start">
-                <div class="hero-content">
-                    <h1 class="hero-title">
-                        <span class="gradient-text">大学生工作信息</span><br>
-                        推荐平台
-                    </h1>
-                    <p class="hero-subtitle">
-                        为大学生量身定制的求职推荐系统<br>
-                        智能匹配，精准推荐，助你找到理想工作
-                    </p>
-                    <div class="hero-buttons">
-                        {% if user.is_authenticated %}
-                            <a href="/recommendations/" class="btn btn-primary btn-lg btn-hero">
-                                <i class="bi bi-stars me-2"></i>查看推荐
-                            </a>
-                            <a href="/jobs/" class="btn btn-outline-light btn-lg btn-hero">
-                                <i class="bi bi-search me-2"></i>浏览职位
-                            </a>
-                        {% else %}
-                            <a href="{% url 'account_login' %}?next=/recommendations/" class="btn btn-primary btn-lg btn-hero">
-                                <i class="bi bi-stars me-2"></i>查看推荐
-                            </a>
-                            <a href="{% url 'account_login' %}?next=/jobs/" class="btn btn-outline-light btn-lg btn-hero">
-                                <i class="bi bi-search me-2"></i>浏览职位
-                            </a>
-                            <a href="{% url 'account_signup' %}" class="btn btn-outline-light btn-lg btn-hero">
-                                <i class="bi bi-person-plus me-2"></i>立即注册
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 text-center">
-                <div class="hero-image">
-                    <div class="floating-card card-1">
-                        <i class="bi bi-briefcase"></i>
-                        <p>职位推荐</p>
-                    </div>
-                    <div class="floating-card card-2">
-                        <i class="bi bi-graph-up"></i>
-                        <p>智能匹配</p>
-                    </div>
-                    <div class="floating-card card-3">
-                        <i class="bi bi-heart"></i>
-                        <p>个性化</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- 顶部搜索栏 -->
+<div class="mobile-search-bar">
+    <form method="GET" action="/jobs/" class="search-input-wrapper">
+        <i class="bi bi-search search-icon"></i>
+        <input 
+            type="text" 
+            name="q" 
+            class="search-input" 
+            placeholder="搜索实习/支持转正岗位/公司"
+            value="{{ request.GET.q|default:'' }}"
+        >
+    </form>
 </div>
 
-<!-- 功能特色区域 -->
-<div class="features-section">
-    <div class="container py-5">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="section-title">为什么选择我们</h2>
-                <p class="section-subtitle">专业的求职推荐服务，助力你的职业发展</p>
-            </div>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-lightning-charge"></i>
-                    </div>
-                    <h3>快速匹配</h3>
-                    <p>基于你的专业、兴趣和偏好，快速为你推荐合适的职位</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-person-check"></i>
-                    </div>
-                    <h3>个性化推荐</h3>
-                    <p>智能算法分析你的简历和偏好，提供精准的个性化推荐</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                    <h3>安全可靠</h3>
-                    <p>保护你的个人信息安全，提供可靠的求职服务</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- 分类筛选 -->
+<div class="category-filters">
+    <a href="/" class="category-btn {% if not request.GET.category %}active{% endif %}">全部</a>
+    <a href="/?category=互联网" class="category-btn {% if request.GET.category == '互联网' %}active{% endif %}">互联网</a>
+    <a href="/?category=金融" class="category-btn {% if request.GET.category == '金融' %}active{% endif %}">金融</a>
+    <a href="/?category=教育" class="category-btn {% if request.GET.category == '教育' %}active{% endif %}">教育</a>
+    <a href="/?category=艺术" class="category-btn {% if request.GET.category == '艺术' %}active{% endif %}">艺术</a>
+    <a href="/?category=建筑" class="category-btn {% if request.GET.category == '建筑' %}active{% endif %}">建筑</a>
 </div>
 
-<!-- 底部CTA区域 -->
+<!-- AI推荐横幅 -->
 {% if not user.is_authenticated %}
-<div class="cta-section">
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-8 text-center">
-                <h2 class="cta-title">准备好开始你的求职之旅了吗？</h2>
-                <p class="cta-subtitle">立即注册，获取专属职位推荐</p>
-                <div class="cta-buttons">
-                    <a href="{% url 'account_signup' %}" class="btn btn-light btn-lg me-3">
-                        <i class="bi bi-person-plus me-2"></i>免费注册
-                    </a>
-                    <a href="{% url 'account_login' %}" class="btn btn-outline-light btn-lg">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>已有账号？登录
-                    </a>
-                </div>
-            </div>
-        </div>
+<div class="ai-banner">
+    <div class="ai-banner-title">检测到你尚未进行AI规划</div>
+    <div class="ai-banner-text">
+        目前岗位仅为通用推荐，上传简历即可解锁<span class="highlight">100%匹配岗位</span>
     </div>
+    <a href="{% url 'account_profile' %}" class="ai-upload-btn">
+        立即上传 >
+    </a>
 </div>
 {% endif %}
-{% endblock content %}
+
+<!-- 热门学生岗位 -->
+<div class="jobs-section">
+    <div class="section-header">
+        <h2 class="section-title">热门学生岗位</h2>
+        <span class="section-subtitle">实时更新</span>
+    </div>
+    
+    {% if jobs %}
+        {% for job in jobs %}
+        <div class="job-card" onclick="window.location.href='{{ job.url }}'">
+            <div class="job-header">
+                <div>
+                    <div class="job-title">{{ job.job_title }}</div>
+                    <div class="job-company">{{ job.company_name }}</div>
+                </div>
+                <div class="match-badge">
+                    <div class="match-icon">DAO</div>
+                    <span>匹配98%</span>
+                </div>
+            </div>
+            
+            <div class="job-tags">
+                {% if job.job_type == 'intern' %}
+                <span class="tag tag-orange">26届实习</span>
+                <span class="tag tag-orange">支持转正</span>
+                {% elif job.job_type == 'fulltime' %}
+                <span class="tag tag-orange">秋招</span>
+                {% endif %}
+                <span class="tag tag-grey">Python</span>
+                <span class="tag tag-grey">需求分析</span>
+            </div>
+            
+            <div class="job-info">
+                <div class="job-location">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>{{ job.location }}</span>
+                    <span>{{ job.source_website }}</span>
+                    <span class="tag tag-green" style="margin-left: 8px;">24h必回</span>
+                </div>
+                <div class="job-salary">
+                    {% if job.salary %}{{ job.salary }}{% else %}面议{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: #999999;">
+        暂无职位信息
+    </div>
+    {% endif %}
+</div>
+
+<!-- 底部导航栏 -->
+<nav class="bottom-nav">
+    <a href="/" class="nav-item active">
+        <i class="bi bi-house-fill nav-icon"></i>
+        <span>首页</span>
+    </a>
+    <a href="/recommendations/" class="nav-item">
+        <i class="bi bi-stars nav-icon"></i>
+        <span>AI 规划</span>
+    </a>
+    <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}{% endif %}" class="nav-item">
+        <i class="bi bi-person nav-icon"></i>
+        <span>我的</span>
+    </a>
+</nav>
+{% endblock %}
 
 {% block extra_js %}
-<!-- Bootstrap JS -->
-<script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-{% endblock extra_js %}
+<script>
+    // 分类筛选点击处理
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // 移除所有active类
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            // 添加active类到当前按钮
+            this.classList.add('active');
+            // 这里可以添加AJAX加载职位列表的逻辑
+        });
+    });
+</script>
+{% endblock %}

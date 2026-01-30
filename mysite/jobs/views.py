@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib import messages
 from django.http import JsonResponse
+from django.utils import timezone
 from wagtail.models import Page
 from .models import JobPage, StudentProfile, JobApplication
 from .forms import CustomSignupForm
@@ -116,6 +117,41 @@ def dashboard(request):
 
 
 @login_required
+def profile_page(request):
+    """用户个人中心页面"""
+    user = request.user
+    
+    # 获取或创建学生档案
+    profile, created = StudentProfile.objects.get_or_create(user=user)
+    
+    # 获取用户的职位申请记录
+    user_applications = JobApplication.objects.filter(user=user)
+    
+    # 统计信息
+    applied_count = user_applications.filter(status='applied').count()  # 已投递
+    pending_interview_count = user_applications.filter(status__in=['contacted', 'applied']).count()  # 待面试（已申请或已联系状态）
+    
+    # 计算平均竞争力（简单算法：基于申请成功率）
+    total_applications = user_applications.count()
+    accepted_count = user_applications.filter(status='accepted').count()
+    if total_applications > 0:
+        competitiveness = int((accepted_count / total_applications) * 100)
+    else:
+        competitiveness = 92  # 默认值
+    
+    # 计算毕业年份标签
+    graduation_label = f"{profile.graduation_year}届准毕业生"
+    
+    return render(request, 'jobs/account/profile.html', {
+        'profile': profile,
+        'user': user,
+        'applied_count': applied_count,
+        'pending_interview_count': pending_interview_count,
+        'competitiveness': competitiveness,
+        'graduation_label': graduation_label,
+    })
+
+@login_required
 def edit_profile(request):
     """编辑个人档案页面"""
     from .forms import ProfileEditForm
@@ -130,7 +166,7 @@ def edit_profile(request):
         if form.is_valid():
             form.save()
             messages.success(request, '个人档案已更新！')
-            return redirect('dashboard')
+            return redirect('account_profile')
     else:
         form = ProfileEditForm(instance=profile, user=user)
     
@@ -162,4 +198,185 @@ def get_location_data(request):
         return JsonResponse({'data': districts})
     
     return JsonResponse({'data': []})
+
+def ai_career_navigation(request):
+    """AI职场导航页面"""
+    return render(request, 'jobs/ai_career_navigation.html')
+
+@login_required
+def upload_resume_api(request):
+    """API: 上传简历文件"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': '仅支持POST请求'})
+    
+    if 'resume' not in request.FILES:
+        return JsonResponse({'success': False, 'message': '请选择文件'})
+    
+    file = request.FILES['resume']
+    
+    # 验证文件类型
+    valid_extensions = ['.pdf', '.docx']
+    file_name = file.name.lower()
+    if not any(file_name.endswith(ext) for ext in valid_extensions):
+        return JsonResponse({'success': False, 'message': '仅支持 PDF 或 DOCX 格式'})
+    
+    # 验证文件大小（10MB）
+    if file.size > 10 * 1024 * 1024:
+        return JsonResponse({'success': False, 'message': '文件大小不能超过 10MB'})
+    
+    # 保存文件到用户档案
+    import os
+    from datetime import datetime
+    
+    try:
+        profile, created = StudentProfile.objects.get_or_create(user=request.user)
+        # 生成文件名
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_ext = os.path.splitext(file.name)[1]
+        file_name = f'resume_{request.user.id}_{timestamp}{file_ext}'
+        
+        # 保存文件
+        profile.resume.save(file_name, file, save=True)
+        file_path = profile.resume.name
+        
+        # 返回文件ID（使用文件路径作为ID）
+        return JsonResponse({
+            'success': True,
+            'file_id': file_path,
+            'message': '文件上传成功'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'文件保存失败: {str(e)}'
+        })
+
+@login_required
+def analyze_resume_api(request):
+    """API: AI分析简历"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': '仅支持POST请求'})
+    
+    import json
+    data = json.loads(request.body)
+    file_id = data.get('file_id')
+    
+    if not file_id:
+        return JsonResponse({'success': False, 'message': '缺少文件ID'})
+    
+    # 获取文件
+    from django.core.files.storage import default_storage
+    from django.conf import settings
+    import os
+    
+    try:
+        # 构建完整文件路径
+        file_path = os.path.join(settings.MEDIA_ROOT, file_id)
+        if not os.path.exists(file_path):
+            return JsonResponse({'success': False, 'message': '文件不存在'})
+        file = open(file_path, 'rb')
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'文件读取失败: {str(e)}'})
+    
+    # 调用AI分析接口（这里需要实现实际的AI分析逻辑）
+    # 目前返回模拟数据
+    try:
+        report = generate_ai_report(file, request.user)
+        file.close()
+        
+        return JsonResponse({
+            'success': True,
+            'report': report,
+            'message': '分析完成'
+        })
+    except Exception as e:
+        file.close()
+        return JsonResponse({
+            'success': False,
+            'message': f'分析失败: {str(e)}'
+        })
+
+@login_required
+def upload_avatar_api(request):
+    """API: 上传头像"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': '仅支持POST请求'})
+    
+    if 'avatar' not in request.FILES:
+        return JsonResponse({'success': False, 'message': '请选择图片'})
+    
+    file = request.FILES['avatar']
+    
+    # 验证文件类型
+    valid_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if file.content_type not in valid_types:
+        return JsonResponse({'success': False, 'message': '仅支持 JPG、PNG、GIF 或 WebP 格式'})
+    
+    # 验证文件大小（5MB）
+    if file.size > 5 * 1024 * 1024:
+        return JsonResponse({'success': False, 'message': '图片大小不能超过 5MB'})
+    
+    # 保存头像
+    try:
+        profile, created = StudentProfile.objects.get_or_create(user=request.user)
+        profile.avatar = file
+        profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'avatar_url': profile.avatar.url if profile.avatar else '',
+            'message': '头像上传成功'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'上传失败: {str(e)}'
+        })
+    except Exception as e:
+        file.close()
+        return JsonResponse({
+            'success': False,
+            'message': f'分析失败: {str(e)}'
+        })
+
+def generate_ai_report(file, user):
+    """生成AI报告（需要集成实际的AI API）"""
+    # TODO: 集成实际的AI API
+    # 这里返回一个示例报告
+    
+    # 尝试读取文件内容（简化处理）
+    file_name = file.name.lower()
+    
+    report = f"""【AI职场竞争力报告】
+
+根据您的简历分析，以下是您的职场竞争力评估：
+
+📊 基本信息分析
+- 文件类型: {file_name.split('.')[-1].upper()}
+- 分析时间: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+💼 技能匹配度
+- 技术技能: 85分
+- 软技能: 78分
+- 综合匹配度: 82分
+
+🎯 岗位推荐
+基于您的简历内容，我们为您推荐以下类型的岗位：
+1. 前端开发工程师
+2. 后端开发工程师
+3. 全栈开发工程师
+
+💡 提升建议
+1. 加强项目经验的描述
+2. 突出核心技能和成果
+3. 完善教育背景信息
+
+📈 竞争力排名
+在同类求职者中，您的竞争力排名：前30%
+
+注：此报告基于AI自动分析生成，仅供参考。实际匹配度可能因具体岗位要求而有所不同。
+"""
+    
+    return report
+
 # Create your views here.

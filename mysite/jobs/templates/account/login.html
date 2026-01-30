@@ -4,244 +4,116 @@
 {% block title %}学生登录 - 学生求职{% endblock %}
 
 {% block extra_css %}
-<!-- Bootstrap 5 CSS -->
-<link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
 <style>
-    /* 全新现代风格登录页面 */
+    /* 移动端友好的登录页面样式 */
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
         overflow-x: hidden;
     }
     
     .login-wrapper {
         min-height: 100vh;
-        background: #0f0c29;
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-        position: relative;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        padding: 2rem 1.5rem;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    
+    /* 顶部图标区域 */
+    .login-header {
+        margin-bottom: 2.5rem;
+        margin-top: 1rem;
+    }
+    
+    .app-icon {
+        width: 64px;
+        height: 64px;
+        background: #9C88FF;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 2rem 1rem;
-        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.3);
     }
     
-    /* 动态背景粒子效果 */
-    .login-wrapper::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: 
-            radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(255, 119, 198, 0.2) 0%, transparent 50%),
-            radial-gradient(circle at 50% 50%, rgba(79, 172, 254, 0.15) 0%, transparent 50%);
-        animation: pulse 8s ease-in-out infinite;
-        z-index: 0;
+    .app-icon i {
+        color: #ffffff;
+        font-size: 2rem;
     }
     
-    @keyframes pulse {
-        0%, 100% { opacity: 0.5; transform: scale(1); }
-        50% { opacity: 0.8; transform: scale(1.1); }
-    }
-    
-    /* 浮动装饰球 */
-    .floating-orb {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(40px);
-        opacity: 0.6;
-        animation: float 20s ease-in-out infinite;
-    }
-    
-    .orb-1 {
-        width: 300px;
-        height: 300px;
-        background: rgba(120, 119, 198, 0.4);
-        top: 10%;
-        left: 10%;
-        animation-delay: 0s;
-    }
-    
-    .orb-2 {
-        width: 200px;
-        height: 200px;
-        background: rgba(255, 119, 198, 0.3);
-        top: 60%;
-        right: 15%;
-        animation-delay: 5s;
-    }
-    
-    .orb-3 {
-        width: 250px;
-        height: 250px;
-        background: rgba(79, 172, 254, 0.3);
-        bottom: 15%;
-        left: 20%;
-        animation-delay: 10s;
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(30px, -30px) scale(1.1); }
-        66% { transform: translate(-20px, 20px) scale(0.9); }
-    }
-    
-    .login-content {
-        position: relative;
-        z-index: 1;
-        width: 100%;
-        max-width: 450px;
-    }
-    
-    /* 玻璃态卡片 */
-    .auth-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .auth-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 
-            0 12px 40px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }
-    
-    /* 顶部装饰条 */
-    .auth-header {
-        background: linear-gradient(135deg, rgba(120, 119, 198, 0.3) 0%, rgba(255, 119, 198, 0.2) 100%);
-        padding: 3rem 2rem 2rem;
-        text-align: center;
-        position: relative;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .auth-header::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60px;
-        height: 4px;
-        background: linear-gradient(90deg, transparent, #7877c6, transparent);
-        border-radius: 2px;
-    }
-    
-    .auth-header-icon {
-        width: 80px;
-        height: 80px;
-        margin: 0 auto 1.5rem;
-        background: linear-gradient(135deg, rgba(120, 119, 198, 0.3), rgba(255, 119, 198, 0.2));
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
-        color: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-        animation: iconFloat 3s ease-in-out infinite;
-    }
-    
-    @keyframes iconFloat {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
-    }
-    
-    .auth-header h3 {
-        font-size: 1.875rem;
+    .login-header h1 {
+        font-size: 1.75rem;
         font-weight: 700;
-        color: rgba(255, 255, 255, 0.95);
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.5px;
+        color: #000000;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.2;
     }
     
-    .auth-header p {
-        color: rgba(255, 255, 255, 0.7);
+    .login-header p {
+        font-size: 0.875rem;
+        color: #666666;
         margin: 0;
-        font-size: 0.95rem;
-        font-weight: 400;
+        line-height: 1.4;
     }
     
-    .card-body {
-        padding: 2.5rem;
-        background: rgba(255, 255, 255, 0.02);
+    /* 表单容器 */
+    .login-form {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
     }
     
-    /* 表单组样式 */
+    /* 表单组 */
     .form-group {
         margin-bottom: 1.5rem;
-        position: relative;
     }
     
     .form-label {
-        color: rgba(255, 255, 255, 0.9);
-        font-weight: 600;
+        display: block;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: #000000;
         margin-bottom: 0.75rem;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
     }
     
-    .form-label i {
-        color: rgba(120, 119, 198, 0.8);
-        font-size: 1.1rem;
+    /* 输入框容器 */
+    .input-wrapper {
+        position: relative;
     }
     
     /* 输入框样式 */
     .form-control {
-        height: 52px;
-        border-radius: 12px;
-        border: 1.5px solid rgba(255, 255, 255, 0.1);
-        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        width: 100%;
+        height: 48px;
+        padding: 0.75rem 1rem;
         font-size: 1rem;
-        background: rgba(255, 255, 255, 0.05);
-        color: rgba(255, 255, 255, 0.95);
-        transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
+        border: 1px solid #E0E0E0;
+        border-radius: 12px;
+        background: #F5F5F5;
+        color: #000000;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        appearance: none;
     }
     
     .form-control::placeholder {
-        color: rgba(255, 255, 255, 0.4);
+        color: #999999;
     }
     
     .form-control:focus {
-        border-color: rgba(120, 119, 198, 0.6);
-        background: rgba(255, 255, 255, 0.08);
-        box-shadow: 
-            0 0 0 3px rgba(120, 119, 198, 0.2),
-            0 4px 12px rgba(0, 0, 0, 0.2);
-        color: rgba(255, 255, 255, 0.95);
         outline: none;
-    }
-    
-    /* 输入框图标 */
-    .input-icon {
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 1.1rem;
-        pointer-events: none;
-        transition: color 0.3s ease;
-        z-index: 2;
-    }
-    
-    .form-group:focus-within .input-icon {
-        color: rgba(120, 119, 198, 0.8);
+        border-color: #9C88FF;
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(156, 136, 255, 0.1);
     }
     
     /* 确保表单字段正确显示 */
@@ -250,178 +122,190 @@
     input[name="login"],
     input[name="password"],
     input[type="email"][name="login"],
+    input[type="text"][name="login"],
     input[type="password"][name="password"] {
         display: block !important;
         visibility: visible !important;
         width: 100% !important;
-        height: 52px !important;
-        padding: 0.75rem 1rem 0.75rem 2.75rem !important;
+        height: 48px !important;
+        padding: 0.75rem 1rem !important;
         font-size: 1rem !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid #E0E0E0 !important;
         border-radius: 12px !important;
-        background: rgba(255, 255, 255, 0.05) !important;
-        color: rgba(255, 255, 255, 0.95) !important;
-        transition: all 0.3s ease !important;
+        background: #F5F5F5 !important;
+        color: #000000 !important;
+        transition: all 0.2s ease !important;
+        box-sizing: border-box !important;
     }
     
     #id_login:focus, #id_password:focus {
-        border-color: rgba(120, 119, 198, 0.6) !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 
-            0 0 0 3px rgba(120, 119, 198, 0.2),
-            0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        border-color: #9C88FF !important;
+        background: #ffffff !important;
+        box-shadow: 0 0 0 3px rgba(156, 136, 255, 0.1) !important;
+        outline: none !important;
     }
     
-    /* 记住我复选框 */
-    .form-check {
+    /* 错误提示 */
+    .form-error {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
         display: flex;
-        align-items: center;
-        padding-left: 0;
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-check-input {
-        width: 20px !important;
-        height: 20px !important;
-        margin-right: 0.75rem !important;
-        margin-top: 0 !important;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.05);
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .form-check-input:checked {
-        background-color: rgba(120, 119, 198, 0.8);
-        border-color: rgba(120, 119, 198, 0.8);
-    }
-    
-    .form-check-label {
-        color: rgba(255, 255, 255, 0.8);
-        cursor: pointer;
-        user-select: none;
-        font-size: 0.9rem;
-    }
-    
-    /* 登录按钮 */
-    .btn-auth {
-        background: linear-gradient(135deg, rgba(120, 119, 198, 0.9) 0%, rgba(255, 119, 198, 0.8) 100%);
-        border: none;
-        border-radius: 12px;
-        height: 52px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: white;
-        width: 100%;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(120, 119, 198, 0.4);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .btn-auth::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s ease;
-    }
-    
-    .btn-auth:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(120, 119, 198, 0.5);
-    }
-    
-    .btn-auth:hover::before {
-        left: 100%;
-    }
-    
-    .btn-auth:active {
-        transform: translateY(0);
-    }
-    
-    /* 链接样式 */
-    .auth-links {
-        text-align: center;
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .auth-links p {
-        margin-bottom: 0.75rem;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 0.9rem;
-    }
-    
-    .auth-links a {
-        color: rgba(120, 119, 198, 0.9);
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        display: inline-flex;
         align-items: center;
         gap: 0.25rem;
     }
     
-    .auth-links a:hover {
-        color: rgba(255, 119, 198, 0.9);
-        text-decoration: none;
-        transform: translateX(2px);
-    }
-    
-    /* 错误提示 */
     .alert {
         border-radius: 12px;
-        border: none;
-        padding: 1rem 1.25rem;
+        padding: 1rem;
         margin-bottom: 1.5rem;
-        background: rgba(220, 53, 69, 0.15);
-        color: rgba(255, 182, 193, 0.95);
-        border-left: 3px solid rgba(220, 53, 69, 0.6);
-        backdrop-filter: blur(10px);
+        background: #fff5f5;
+        color: #dc3545;
+        border: 1px solid #fecaca;
+        font-size: 0.875rem;
     }
     
-    .alert-danger {
+    /* 登录按钮 */
+    .btn-login {
+        width: 100%;
+        height: 48px;
+        background: #9C88FF;
+        border: none;
+        border-radius: 12px;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(156, 136, 255, 0.3);
+    }
+    
+    .btn-login:hover {
+        background: #8B7AE8;
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4);
+    }
+    
+    .btn-login:active {
+        transform: scale(0.98);
+    }
+    
+    /* 注册链接 */
+    .register-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        font-size: 0.875rem;
+        color: #666666;
+    }
+    
+    .register-link a {
+        color: #4A90E2;
+        text-decoration: underline;
+        font-weight: 500;
+    }
+    
+    .register-link a:hover {
+        color: #357ABD;
+    }
+    
+    /* 社交登录区域 */
+    .social-login {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #E0E0E0;
+    }
+    
+    .social-login-title {
+        text-align: center;
+        font-size: 0.875rem;
+        color: #999999;
+        margin-bottom: 1rem;
+    }
+    
+    .social-buttons {
         display: flex;
+        justify-content: center;
+        gap: 2rem;
+        align-items: center;
+    }
+    
+    .social-btn {
+        display: flex;
+        flex-direction: column;
         align-items: center;
         gap: 0.5rem;
+        text-decoration: none;
+        color: #666666;
+        transition: transform 0.2s ease;
     }
     
-    .text-danger {
-        color: rgba(255, 182, 193, 0.9) !important;
+    .social-btn:hover {
+        transform: scale(1.05);
+        color: #333333;
     }
     
-    /* 响应式设计 */
-    @media (max-width: 768px) {
+    .social-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .social-icon.wechat {
+        background: #07C160;
+    }
+    
+    .social-icon.qq {
+        background: #ffffff;
+        border: 1px solid #E0E0E0;
+    }
+    
+    .social-icon.qq img {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+    }
+    
+    .social-label {
+        font-size: 0.75rem;
+        color: #666666;
+    }
+    
+    /* 隐藏记住我复选框（移动端通常不需要） */
+    .form-check {
+        display: none;
+    }
+    
+    /* 响应式调整 */
+    @media (min-width: 768px) {
         .login-wrapper {
-            padding: 1rem;
+            max-width: 450px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .login-wrapper {
+            padding: 1.5rem 1rem;
         }
         
-        .card-body {
-            padding: 2rem 1.5rem;
-        }
-        
-        .auth-header {
-            padding: 2rem 1.5rem 1.5rem;
-        }
-        
-        .auth-header h3 {
+        .login-header h1 {
             font-size: 1.5rem;
         }
         
-        .auth-header-icon {
-            width: 70px;
-            height: 70px;
-            font-size: 2rem;
+        .app-icon {
+            width: 56px;
+            height: 56px;
         }
         
-        .floating-orb {
-            display: none;
+        .app-icon i {
+            font-size: 1.75rem;
         }
     }
 </style>
@@ -429,142 +313,120 @@
 
 {% block content %}
 <div class="login-wrapper">
-    <!-- 浮动装饰球 -->
-    <div class="floating-orb orb-1"></div>
-    <div class="floating-orb orb-2"></div>
-    <div class="floating-orb orb-3"></div>
+    <!-- 顶部区域 -->
+    <div class="login-header">
+        <div class="app-icon">
+            <i class="bi bi-briefcase"></i>
+        </div>
+        <h1>欢迎回来</h1>
+        <p>大学生就业推荐服务平台</p>
+    </div>
     
-    <div class="login-content">
-        <div class="auth-card">
-            <div class="auth-header">
-                <div class="auth-header-icon">
-                    <i class="bi bi-shield-lock"></i>
+    <!-- 登录表单 -->
+    <div class="login-form">
+        <form method="POST" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="alert">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- 手机号/邮箱输入 -->
+            <div class="form-group">
+                <label for="id_login" class="form-label">手机号/邮箱</label>
+                <div class="input-wrapper">
+                    {{ form.login }}
                 </div>
-                <h3>欢迎回来</h3>
-                <p>登录以继续你的求职之旅</p>
+                {% if form.login.errors %}
+                <div class="form-error">
+                    {{ form.login.errors.0 }}
+                </div>
+                {% endif %}
             </div>
             
-            <div class="card-body">
-                <form method="POST" action="{% url 'account_login' %}">
-                    {% csrf_token %}
-                    
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <span>{% for error in form.non_field_errors %}{{ error }}{% endfor %}</span>
+            <!-- 密码输入 -->
+            <div class="form-group">
+                <label for="id_password" class="form-label">密码</label>
+                <div class="input-wrapper">
+                    {{ form.password }}
+                </div>
+                {% if form.password.errors %}
+                <div class="form-error">
+                    {{ form.password.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- 记住我（隐藏） -->
+            {% if form.remember %}
+            <div class="form-check" style="display: none;">
+                {{ form.remember }}
+            </div>
+            {% endif %}
+            
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+            {% endif %}
+            
+            <!-- 登录按钮 -->
+            <button type="submit" class="btn-login">
+                立即登录
+            </button>
+            
+            <!-- 注册链接 -->
+            <div class="register-link">
+                还没有账号？<a href="{% url 'account_signup' %}">立即注册</a>
+            </div>
+        </form>
+        
+        <!-- 社交登录 -->
+        <div class="social-login">
+            <div class="social-login-title">其他登录方式</div>
+            <div class="social-buttons">
+                <a href="#" class="social-btn" onclick="alert('微信登录功能开发中'); return false;">
+                    <div class="social-icon wechat">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.344-8.597-6.344zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.179c0-.651.52-1.18 1.162-1.18zm5.34 3.336c-1.287 0-2.443.49-3.337 1.285a5.707 5.707 0 0 0-1.38 2.033 5.66 5.66 0 0 0-.345 1.872c0 .65.12 1.274.345 1.872.305.918.8 1.73 1.38 2.033.894.794 2.05 1.285 3.337 1.285 1.287 0 2.443-.49 3.337-1.285a5.707 5.707 0 0 0 1.38-2.033c.225-.598.345-1.223.345-1.872 0-.65-.12-1.274-.345-1.872a5.707 5.707 0 0 0-1.38-2.033 4.646 4.646 0 0 0-3.337-1.285zm-1.162 3.336c.36 0 .652.292.652.651a.66.66 0 0 1-.652.651.66.66 0 0 1-.651-.65c0-.36.292-.652.651-.652zm3.244 0c.36 0 .652.292.652.651a.66.66 0 0 1-.652.651.66.66 0 0 1-.651-.65c0-.36.292-.652.651-.652z"/>
+                        </svg>
                     </div>
-                    {% endif %}
-                    
-                    <!-- 邮箱地址 -->
-                    <div class="form-group">
-                        <label for="id_login" class="form-label">
-                            <i class="bi bi-envelope"></i>
-                            <span>邮箱地址</span>
-                        </label>
-                        <div style="position: relative;">
-                            <i class="bi bi-envelope input-icon"></i>
-                            {{ form.login }}
-                        </div>
-                        {% if form.login.errors %}
-                        <div class="text-danger small mt-2">
-                            <i class="bi bi-exclamation-circle me-1"></i>{{ form.login.errors.0 }}
-                        </div>
-                        {% endif %}
+                    <span class="social-label">微信</span>
+                </a>
+                <a href="#" class="social-btn" onclick="alert('QQ登录功能开发中'); return false;">
+                    <div class="social-icon qq">
+                        <img src="//pic.616pic.com/ys_bnew_img/00/20/08/GSRyVrhz3v.jpg" alt="QQ">
                     </div>
-                    
-                    <!-- 密码 -->
-                    <div class="form-group">
-                        <label for="id_password" class="form-label">
-                            <i class="bi bi-lock"></i>
-                            <span>密码</span>
-                        </label>
-                        <div style="position: relative;">
-                            <i class="bi bi-lock input-icon"></i>
-                            {{ form.password }}
-                        </div>
-                        {% if form.password.errors %}
-                        <div class="text-danger small mt-2">
-                            <i class="bi bi-exclamation-circle me-1"></i>{{ form.password.errors.0 }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- 记住我 -->
-                    <div class="form-check">
-                        {{ form.remember }}
-                        <label class="form-check-label" for="id_remember">
-                            记住我
-                        </label>
-                    </div>
-                    
-                    {% if redirect_field_value %}
-                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
-                    {% endif %}
-                    
-                    <button type="submit" class="btn btn-auth w-100">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>立即登录
-                    </button>
-                    
-                    <div class="auth-links">
-                        <p>
-                            <a href="{% url 'account_reset_password' %}">
-                                <i class="bi bi-question-circle"></i>
-                                <span>忘记密码？</span>
-                            </a>
-                        </p>
-                        <p>
-                            还没有账号？
-                            <a href="{% url 'account_signup' %}">
-                                <i class="bi bi-person-plus"></i>
-                                <span>立即注册</span>
-                            </a>
-                        </p>
-                    </div>
-                </form>
+                    <span class="social-label">QQ</span>
+                </a>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // 表单字段样式优化和交互增强
+    // 表单字段初始化
     (function() {
         'use strict';
         
         function initLoginForm() {
             const loginInput = document.getElementById('id_login');
             const passwordInput = document.getElementById('id_password');
-            const rememberCheckbox = document.getElementById('id_remember');
             
-            // 设置输入框样式和占位符
+            // 设置输入框占位符
             if (loginInput) {
-                loginInput.classList.add('form-control');
-                loginInput.setAttribute('placeholder', 'your.email@example.com');
+                loginInput.setAttribute('placeholder', '请输入手机号/邮箱');
                 loginInput.setAttribute('autocomplete', 'email');
+                loginInput.classList.add('form-control');
             }
             
             if (passwordInput) {
-                passwordInput.classList.add('form-control');
-                passwordInput.setAttribute('placeholder', '••••••••');
+                passwordInput.setAttribute('placeholder', '请输入密码');
                 passwordInput.setAttribute('autocomplete', 'current-password');
+                passwordInput.classList.add('form-control');
             }
-            
-            if (rememberCheckbox) {
-                rememberCheckbox.classList.add('form-check-input');
-            }
-            
-            // 添加输入框焦点动画
-            [loginInput, passwordInput].forEach(input => {
-                if (input) {
-                    input.addEventListener('focus', function() {
-                        this.parentElement.style.transform = 'scale(1.02)';
-                    });
-                    
-                    input.addEventListener('blur', function() {
-                        this.parentElement.style.transform = 'scale(1)';
-                    });
-                }
-            });
         }
         
         // 页面加载时初始化
