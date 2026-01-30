@@ -195,6 +195,212 @@
         display: none;
     }
     
+    /* 专属职场竞争力模块 */
+    .exclusive-competitiveness-section {
+        padding: 0 20px 30px;
+        margin-top: 20px;
+    }
+    
+    .exclusive-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        border-radius: 20px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* 背景装饰图形 */
+    .exclusive-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            radial-gradient(circle at 20% 30%, rgba(156, 136, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(79, 172, 254, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(240, 147, 251, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    
+    /* 星星装饰 */
+    .exclusive-card::after {
+        content: '✦';
+        position: absolute;
+        top: 15%;
+        right: 10%;
+        font-size: 20px;
+        color: rgba(255, 255, 255, 0.2);
+        animation: twinkle 3s ease-in-out infinite;
+    }
+    
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 0.5; }
+    }
+    
+    .exclusive-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .exclusive-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+    
+    .exclusive-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #9C88FF 0%, #764ba2 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .exclusive-icon i {
+        font-size: 20px;
+        color: #ffffff;
+    }
+    
+    .exclusive-title-group {
+        flex: 1;
+    }
+    
+    .exclusive-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0 0 4px 0;
+        line-height: 1.2;
+    }
+    
+    .exclusive-subtitle {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0;
+        line-height: 1.4;
+    }
+    
+    .exclusive-locked-badge {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 6px 12px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        flex-shrink: 0;
+    }
+    
+    .exclusive-locked-badge i {
+        font-size: 12px;
+    }
+    
+    .exclusive-content {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 32px 20px;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .exclusive-main-text {
+        font-size: 18px;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 12px;
+        line-height: 1.4;
+    }
+    
+    .exclusive-description {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 24px;
+        line-height: 1.5;
+    }
+    
+    .exclusive-upload-btn {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(74, 144, 226, 0.4);
+        border: none;
+    }
+    
+    .exclusive-upload-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(74, 144, 226, 0.6);
+    }
+    
+    .exclusive-upload-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .exclusive-upload-btn i {
+        font-size: 24px;
+        color: #ffffff;
+    }
+    
+    .exclusive-upload-btn svg {
+        width: 24px;
+        height: 24px;
+        fill: #ffffff;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 480px) {
+        .exclusive-card {
+            padding: 20px;
+        }
+        
+        .exclusive-title {
+            font-size: 16px;
+        }
+        
+        .exclusive-subtitle {
+            font-size: 11px;
+        }
+        
+        .exclusive-main-text {
+            font-size: 16px;
+        }
+        
+        .exclusive-description {
+            font-size: 12px;
+        }
+        
+        .exclusive-icon {
+            width: 36px;
+            height: 36px;
+        }
+        
+        .exclusive-icon i {
+            font-size: 18px;
+        }
+    }
+    
     /* AI报告区域 */
     .report-section {
         padding: 0 20px;
@@ -335,6 +541,36 @@
         </div>
     </div>
     <input type="file" id="resume-file-input" accept=".pdf,.docx" />
+</div>
+
+<!-- 专属职场竞争力模块 -->
+<div class="exclusive-competitiveness-section">
+    <div class="exclusive-card">
+        <div class="exclusive-header">
+            <div class="exclusive-title-wrapper">
+                <div class="exclusive-icon">
+                    <i class="bi bi-bar-chart-line"></i>
+                </div>
+                <div class="exclusive-title-group">
+                    <h3 class="exclusive-title">专属职场竞争力</h3>
+                    <p class="exclusive-subtitle">心理学×硬实力×未来潜力</p>
+                </div>
+            </div>
+            <div class="exclusive-locked-badge">
+                <i class="bi bi-lock-fill"></i>
+                <span>Locked</span>
+            </div>
+        </div>
+        <div class="exclusive-content">
+            <div class="exclusive-main-text">上传简历,获取你的专属画像</div>
+            <div class="exclusive-description">深度解析你的12个职业维度潜能</div>
+            <button class="exclusive-upload-btn" onclick="document.getElementById('resume-file-input').click()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V16M12 4L8 8M12 4L16 8M4 20H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- AI报告区域 -->
