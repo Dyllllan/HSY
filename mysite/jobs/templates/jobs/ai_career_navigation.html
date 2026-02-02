@@ -412,11 +412,8 @@
         border-radius: 16px;
         padding: 20px;
         min-height: 300px;
-        display: none;
-    }
-    
-    .report-container.show {
         display: block;
+        margin-top: 40px;
     }
     
     .report-title {
@@ -644,62 +641,24 @@
     </div>
 </div>
 
-<!-- 简历上传区域 -->
-<div class="upload-section">
-    <div class="upload-area" id="upload-area" onclick="document.getElementById('resume-file-input').click()">
-        <div class="upload-icon">
-            <i class="bi bi-cloud-upload"></i>
-        </div>
-        <div class="upload-text">点击上传简历</div>
-        <div class="upload-hint">支持 PDF、DOCX 格式</div>
-        <div class="privacy-pledge">
-            <i class="bi bi-check-circle-fill"></i>
-            <span>隐私保护承诺:你的简历仅用于匹配</span>
-        </div>
-    </div>
-    <input type="file" id="resume-file-input" accept=".pdf,.docx" />
-</div>
-
-<!-- 专属职场竞争力模块 -->
-<div class="exclusive-competitiveness-section">
-    <div class="exclusive-card">
-        <div class="exclusive-header">
-            <div class="exclusive-title-wrapper">
-                <div class="exclusive-icon">
-                    <i class="bi bi-bar-chart-line"></i>
-                </div>
-                <div class="exclusive-title-group">
-                    <h3 class="exclusive-title">专属职场竞争力</h3>
-                    <p class="exclusive-subtitle">心理学×硬实力×未来潜力</p>
-                </div>
-            </div>
-            <div class="exclusive-locked-badge">
-                <i class="bi bi-lock-fill"></i>
-                <span>Locked</span>
-            </div>
-        </div>
-        <div class="exclusive-content">
-            <div class="exclusive-main-text">上传简历,获取你的专属画像</div>
-            <div class="exclusive-description">深度解析你的12个职业维度潜能</div>
-            <button class="exclusive-upload-btn" onclick="document.getElementById('resume-file-input').click()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 4V16M12 4L8 8M12 4L16 8M4 20H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </div>
-    </div>
-</div>
-
 <!-- AI报告区域 -->
 <div class="report-section">
     <div class="report-container" id="report-container">
         <div class="report-title">AI职场竞争力报告</div>
-        <div class="report-content" id="report-content"></div>
+        <div class="report-content" id="report-content" style="display: none;"></div>
         <div class="report-loading" id="report-loading" style="display: none;">
             <i class="bi bi-arrow-repeat"></i>
             <div>正在分析简历，请稍候...</div>
         </div>
         <div class="report-error" id="report-error" style="display: none;"></div>
+        <div style="text-align: center; color: #999999; padding: 40px 20px;">
+            <i class="bi bi-info-circle" style="font-size: 32px; margin-bottom: 12px;"></i>
+            <div>此模块用于接入外部AI API进行简历分析</div>
+            <div style="font-size: 12px; margin-top: 8px; color: #666666;">
+                当前API接口: /api/analyze-resume/<br>
+                状态: 已配置，但未接入实际外部AI服务（目前返回模拟数据）
+            </div>
+        </div>
     </div>
 </div>
 
@@ -721,105 +680,30 @@
     }
     
     const csrftoken = getCookie('csrftoken');
-    
-    const uploadArea = document.getElementById('upload-area');
-    const fileInput = document.getElementById('resume-file-input');
     const reportContainer = document.getElementById('report-container');
     const reportContent = document.getElementById('report-content');
     const reportLoading = document.getElementById('report-loading');
     const reportError = document.getElementById('report-error');
     
-    // 文件选择处理
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            handleFileUpload(file);
-        }
-    });
-    
-    // 拖拽上传
-    uploadArea.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-    });
-    
-    uploadArea.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-    });
-    
-    uploadArea.addEventListener('drop', function(e) {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file && (file.type === 'application/pdf' || file.name.endsWith('.docx'))) {
-            handleFileUpload(file);
-        } else {
-            alert('请上传 PDF 或 DOCX 格式的简历文件');
-        }
-    });
-    
-    // 处理文件上传
-    function handleFileUpload(file) {
-        // 验证文件类型
-        const validTypes = ['application/pdf'];
-        const validExtensions = ['.pdf', '.docx'];
-        const fileName = file.name.toLowerCase();
-        const isValidType = validTypes.includes(file.type) || validExtensions.some(ext => fileName.endsWith(ext));
-        
-        if (!isValidType) {
-            alert('请上传 PDF 或 DOCX 格式的简历文件');
-            return;
-        }
-        
-        // 验证文件大小（限制为10MB）
-        if (file.size > 10 * 1024 * 1024) {
-            alert('文件大小不能超过 10MB');
-            return;
-        }
-        
-        // 更新UI状态
-        updateStepProgress(1);
-        uploadArea.style.pointerEvents = 'none';
-        uploadArea.style.opacity = '0.6';
-        
-        // 上传文件
-        const formData = new FormData();
-        formData.append('resume', file);
-        
-        // 显示报告容器和加载状态
+    // 页面加载时显示报告容器
+    document.addEventListener('DOMContentLoaded', function() {
         reportContainer.classList.add('show');
+    });
+    
+    /**
+     * 调用外部AI API分析简历
+     * @param {string} fileId - 简历文件ID
+     */
+    function analyzeResume(fileId) {
+        // 更新步骤进度 - 显示正在分析
+        updateStepProgress(2);
+        
+        // 显示加载状态
         reportContent.style.display = 'none';
         reportError.style.display = 'none';
         reportLoading.style.display = 'block';
         
-        fetch('/api/upload-resume/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updateStepProgress(2);
-                // 调用AI分析接口
-                analyzeResume(data.file_id);
-            } else {
-                showError(data.message || '文件上传失败，请重试');
-                resetUploadArea();
-            }
-        })
-        .catch(error => {
-            console.error('Upload error:', error);
-            showError('网络错误，请重试');
-            resetUploadArea();
-        });
-    }
-    
-    // 分析简历
-    function analyzeResume(fileId) {
+        // 调用后端API接口
         fetch('/api/analyze-resume/', {
             method: 'POST',
             headers: {
@@ -832,6 +716,7 @@
         .then(data => {
             reportLoading.style.display = 'none';
             if (data.success) {
+                // 更新步骤进度 - 分析完成
                 updateStepProgress(3);
                 // 显示报告内容
                 reportContent.textContent = data.report || '分析完成，但未生成报告内容。';
@@ -892,12 +777,8 @@
         reportError.style.display = 'block';
     }
     
-    // 重置上传区域
-    function resetUploadArea() {
-        uploadArea.style.pointerEvents = 'auto';
-        uploadArea.style.opacity = '1';
-        fileInput.value = '';
-    }
+    // 导出函数供外部调用
+    window.analyzeResume = analyzeResume;
 </script>
 
 <!-- 底部导航栏 -->
