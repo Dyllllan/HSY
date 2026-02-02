@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
 <style>
     /* 移动端首页样式 */
     body.mobile-homepage {
@@ -356,6 +356,123 @@
         font-size: 22px;
     }
     
+    /* AI规划按钮 - 紫色圆形显眼按钮 */
+    .nav-item.ai-planning-btn {
+        position: relative;
+        margin-top: -20px; /* 向上突出 */
+        z-index: 10;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    /* 悬浮动画 */
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    /* 脉冲动画 */
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4), 0 0 0 0 rgba(156, 136, 255, 0.7);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4), 0 0 0 8px rgba(156, 136, 255, 0);
+        }
+    }
+    
+    /* 图标旋转动画 */
+    @keyframes rotate {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    
+    /* 光晕效果 */
+    @keyframes glow {
+        0%, 100% {
+            opacity: 0.8;
+        }
+        50% {
+            opacity: 1;
+        }
+    }
+    
+    .nav-item.ai-planning-btn .nav-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4);
+        transition: all 0.3s ease;
+        margin-bottom: 4px;
+        position: relative;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    /* 光晕环 */
+    .nav-item.ai-planning-btn .nav-icon-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.3) 0%, rgba(123, 104, 238, 0.3) 100%);
+        z-index: -1;
+        animation: glow 2s ease-in-out infinite;
+    }
+    
+    .nav-item.ai-planning-btn:hover .nav-icon-wrapper {
+        transform: scale(1.15);
+        box-shadow: 0 6px 20px rgba(156, 136, 255, 0.6), 0 0 0 4px rgba(156, 136, 255, 0.2);
+        animation: none; /* 悬停时停止脉冲 */
+    }
+    
+    .nav-item.ai-planning-btn:active .nav-icon-wrapper {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4);
+    }
+    
+    .nav-item.ai-planning-btn .nav-icon {
+        color: #ffffff;
+        font-size: 24px;
+        transition: transform 0.3s ease;
+    }
+    
+    /* 悬停时图标旋转 */
+    .nav-item.ai-planning-btn:hover .nav-icon {
+        animation: rotate 1s linear infinite;
+    }
+    
+    .nav-item.ai-planning-btn span {
+        color: #9C88FF;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-item.ai-planning-btn:hover span {
+        color: #7B68EE;
+        transform: scale(1.05);
+    }
+    
+    .nav-item.ai-planning-btn.active span {
+        color: #9C88FF;
+    }
+    
     /* 响应式调整 */
     @media (min-width: 768px) {
         .mobile-search-bar,
@@ -476,8 +593,10 @@
         <i class="bi bi-house-fill nav-icon"></i>
         <span>首页</span>
     </a>
-    <a href="/recommendations/" class="nav-item">
-        <i class="bi bi-stars nav-icon"></i>
+    <a href="/recommendations/" class="nav-item ai-planning-btn">
+        <div class="nav-icon-wrapper">
+            <i class="bi bi-stars nav-icon"></i>
+        </div>
         <span>AI 规划</span>
     </a>
     <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}{% endif %}" class="nav-item">
