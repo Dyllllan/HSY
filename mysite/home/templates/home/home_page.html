@@ -53,6 +53,81 @@
         border-color: #6B8E9F;
     }
     
+    .search-clear-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999999;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        transition: color 0.2s;
+    }
+    
+    .search-clear-btn:hover {
+        color: #333333;
+    }
+    
+    .search-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-top: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .search-suggestions.show {
+        display: block;
+    }
+    
+    .suggestion-item {
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #F5F5F5;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: background 0.2s;
+    }
+    
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+    
+    .suggestion-item:hover {
+        background: #F5F5F5;
+    }
+    
+    .suggestion-item i {
+        color: #6B8E9F;
+        font-size: 16px;
+    }
+    
+    .suggestion-text {
+        flex: 1;
+        font-size: 14px;
+        color: #333333;
+    }
+    
+    .suggestion-highlight {
+        color: #9C88FF;
+        font-weight: 600;
+    }
+    
     /* 分类筛选 */
     .category-filters {
         padding: 12px 16px;
@@ -60,6 +135,7 @@
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+        position: relative;
     }
     
     .category-filters::-webkit-scrollbar {
@@ -67,8 +143,10 @@
     }
     
     .category-btn {
-        display: inline-block;
-        padding: 6px 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
         margin-right: 8px;
         border: 1px solid #E0E0E0;
         border-radius: 16px;
@@ -79,12 +157,83 @@
         cursor: pointer;
         transition: all 0.2s;
         text-decoration: none;
+        position: relative;
+    }
+    
+    .category-btn i {
+        font-size: 16px;
+        opacity: 0.7;
     }
     
     .category-btn.active {
         background: #1e40af;
         color: #ffffff;
         border-color: #1e40af;
+        box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
+    }
+    
+    .category-btn.active i {
+        opacity: 1;
+    }
+    
+    .category-btn:hover {
+        border-color: #1e40af;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .category-btn.active:hover {
+        background: #1e3a8a;
+        border-color: #1e3a8a;
+    }
+    
+    .category-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        background: rgba(30, 64, 175, 0.1);
+        color: #1e40af;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-left: 2px;
+    }
+    
+    .category-btn.active .category-count {
+        background: rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+    }
+    
+    .category-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .category-filters.loading .category-btn {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+    
+    .category-filters.loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border: 2px solid #1e40af;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: translate(-50%, -50%) rotate(360deg); }
     }
     
     /* AI推荐横幅 */
@@ -493,26 +642,60 @@
 {% block content %}
 <!-- 顶部搜索栏 -->
 <div class="mobile-search-bar">
-    <form method="GET" action="/jobs/" class="search-input-wrapper">
+    <form method="GET" action="/" class="search-input-wrapper" id="search-form">
         <i class="bi bi-search search-icon"></i>
         <input 
             type="text" 
             name="q" 
+            id="search-input"
             class="search-input" 
             placeholder="搜索实习/支持转正岗位/公司"
-            value="{{ request.GET.q|default:'' }}"
+            value="{{ search_query|default:'' }}"
+            autocomplete="off"
         >
+        {% if search_query %}
+        <button type="button" class="search-clear-btn" id="search-clear-btn" onclick="clearSearch()">
+            <i class="bi bi-x-circle"></i>
+        </button>
+        {% endif %}
     </form>
 </div>
 
 <!-- 分类筛选 -->
-<div class="category-filters">
-    <a href="/" class="category-btn {% if not request.GET.category %}active{% endif %}">全部</a>
-    <a href="/?category=互联网" class="category-btn {% if request.GET.category == '互联网' %}active{% endif %}">互联网</a>
-    <a href="/?category=金融" class="category-btn {% if request.GET.category == '金融' %}active{% endif %}">金融</a>
-    <a href="/?category=教育" class="category-btn {% if request.GET.category == '教育' %}active{% endif %}">教育</a>
-    <a href="/?category=艺术" class="category-btn {% if request.GET.category == '艺术' %}active{% endif %}">艺术</a>
-    <a href="/?category=建筑" class="category-btn {% if request.GET.category == '建筑' %}active{% endif %}">建筑</a>
+<div class="category-filters" id="category-filters">
+    <a href="/{% if search_query %}?q={{ search_query }}{% endif %}" class="category-btn {% if not current_category %}active{% endif %}" data-category="">
+        <span>全部</span>
+    </a>
+    <a href="/?category=互联网{% if search_query %}&q={{ search_query }}{% endif %}" class="category-btn {% if current_category == '互联网' %}active{% endif %}" data-category="互联网">
+        <i class="bi bi-laptop"></i>
+        <span>互联网</span>
+        {% if category_counts.互联网 %}<span class="category-count">{{ category_counts.互联网 }}</span>{% endif %}
+    </a>
+    <a href="/?category=金融{% if search_query %}&q={{ search_query }}{% endif %}" class="category-btn {% if current_category == '金融' %}active{% endif %}" data-category="金融">
+        <i class="bi bi-bank"></i>
+        <span>金融</span>
+        {% if category_counts.金融 %}<span class="category-count">{{ category_counts.金融 }}</span>{% endif %}
+    </a>
+    <a href="/?category=教育{% if search_query %}&q={{ search_query }}{% endif %}" class="category-btn {% if current_category == '教育' %}active{% endif %}" data-category="教育">
+        <i class="bi bi-book"></i>
+        <span>教育</span>
+        {% if category_counts.教育 %}<span class="category-count">{{ category_counts.教育 }}</span>{% endif %}
+    </a>
+    <a href="/?category=艺术{% if search_query %}&q={{ search_query }}{% endif %}" class="category-btn {% if current_category == '艺术' %}active{% endif %}" data-category="艺术">
+        <i class="bi bi-palette"></i>
+        <span>艺术</span>
+        {% if category_counts.艺术 %}<span class="category-count">{{ category_counts.艺术 }}</span>{% endif %}
+    </a>
+    <a href="/?category=建筑{% if search_query %}&q={{ search_query }}{% endif %}" class="category-btn {% if current_category == '建筑' %}active{% endif %}" data-category="建筑">
+        <i class="bi bi-building"></i>
+        <span>建筑</span>
+        {% if category_counts.建筑 %}<span class="category-count">{{ category_counts.建筑 }}</span>{% endif %}
+    </a>
+    <a href="/?category=医疗{% if search_query %}&q={{ search_query }}{% endif %}" class="category-btn {% if current_category == '医疗' %}active{% endif %}" data-category="医疗">
+        <i class="bi bi-heart-pulse"></i>
+        <span>医疗</span>
+        {% if category_counts.医疗 %}<span class="category-count">{{ category_counts.医疗 }}</span>{% endif %}
+    </a>
 </div>
 
 <!-- AI推荐横幅 -->
@@ -528,11 +711,19 @@
 </div>
 {% endif %}
 
-<!-- 热门学生岗位 -->
+<!-- 热门学生岗位 / 搜索结果 -->
 <div class="jobs-section">
     <div class="section-header">
+        {% if search_query %}
+        <h2 class="section-title">搜索结果</h2>
+        <span class="section-subtitle">找到 {{ jobs|length }} 个相关岗位</span>
+        {% elif current_category %}
+        <h2 class="section-title">{{ current_category }}相关岗位</h2>
+        <span class="section-subtitle">找到 {{ jobs|length }} 个岗位</span>
+        {% else %}
         <h2 class="section-title">热门学生岗位</h2>
         <span class="section-subtitle">实时更新</span>
+        {% endif %}
     </div>
     
     {% if jobs %}
@@ -578,7 +769,19 @@
         {% endfor %}
     {% else %}
     <div style="text-align: center; padding: 40px; color: #999999;">
+        {% if search_query or current_category %}
+        <i class="bi bi-search" style="font-size: 48px; margin-bottom: 16px; display: block; opacity: 0.3;"></i>
+        <div style="font-size: 16px; margin-bottom: 8px;">未找到相关职位</div>
+        <div style="font-size: 14px; color: #999999;">
+            {% if search_query %}
+            试试其他关键词，或<a href="/" style="color: #9C88FF;">查看全部职位</a>
+            {% else %}
+            <a href="/" style="color: #9C88FF;">查看全部职位</a>
+            {% endif %}
+        </div>
+        {% else %}
         暂无职位信息
+        {% endif %}
     </div>
     {% endif %}
 </div>
@@ -604,15 +807,122 @@
 
 {% block extra_js %}
 <script>
+    // 清除搜索
+    function clearSearch() {
+        const searchInput = document.getElementById('search-input');
+        const searchForm = document.getElementById('search-form');
+        if (searchInput) {
+            searchInput.value = '';
+            // 如果有分类筛选，保留分类参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const category = urlParams.get('category');
+            if (category) {
+                window.location.href = '/?category=' + encodeURIComponent(category);
+            } else {
+                window.location.href = '/';
+            }
+        }
+    }
+    
+    // 搜索输入框事件处理
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search-input');
+        const searchForm = document.getElementById('search-form');
+        const clearBtn = document.getElementById('search-clear-btn');
+        
+        // 回车键提交搜索
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchForm.submit();
+                }
+            });
+            
+            // 输入时显示/隐藏清除按钮
+            searchInput.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    if (!clearBtn) {
+                        // 动态创建清除按钮
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'search-clear-btn';
+                        btn.id = 'search-clear-btn';
+                        btn.innerHTML = '<i class="bi bi-x-circle"></i>';
+                        btn.onclick = clearSearch;
+                        searchInput.parentElement.appendChild(btn);
+                    }
+                } else if (clearBtn) {
+                    clearBtn.remove();
+                }
+            });
+        }
+        
+        // 点击搜索图标也提交搜索
+        const searchIcon = document.querySelector('.search-icon');
+        if (searchIcon && searchForm) {
+            searchIcon.addEventListener('click', function() {
+                searchForm.submit();
+            });
+        }
+    });
+    
     // 分类筛选点击处理
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            // 移除所有active类
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            // 添加active类到当前按钮
-            this.classList.add('active');
-            // 这里可以添加AJAX加载职位列表的逻辑
+            // 添加点击动画效果
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+            
+            // 允许默认行为（跳转），但确保保留搜索关键词
+            const searchInput = document.getElementById('search-input');
+            if (searchInput && searchInput.value.trim()) {
+                const href = this.getAttribute('href');
+                const separator = href.includes('?') ? '&' : '?';
+                const newHref = href + separator + 'q=' + encodeURIComponent(searchInput.value.trim());
+                this.setAttribute('href', newHref);
+            }
+            
+            // 添加加载状态
+            const categoryFilters = document.getElementById('category-filters');
+            if (categoryFilters) {
+                categoryFilters.classList.add('loading');
+            }
+            
+            // 页面加载后滚动到职位列表
+            setTimeout(() => {
+                const jobsSection = document.querySelector('.jobs-section');
+                if (jobsSection) {
+                    jobsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        });
+    });
+    
+    // 页面加载完成后移除加载状态
+    window.addEventListener('load', function() {
+        const categoryFilters = document.getElementById('category-filters');
+        if (categoryFilters) {
+            categoryFilters.classList.remove('loading');
+        }
+    });
+    
+    // 分类按钮悬停效果
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('active')) {
+                this.style.borderColor = '#1e40af';
+                this.style.color = '#1e40af';
+            }
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('active')) {
+                this.style.borderColor = '#E0E0E0';
+                this.style.color = '#333333';
+            }
         });
     });
     

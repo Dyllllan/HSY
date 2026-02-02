@@ -29,6 +29,8 @@ urlpatterns = [
     # AI职场导航
     path("recommendations/", jobs_views.ai_career_navigation, name="ai_career_navigation"),
     path("AIresult/", jobs_views.ai_result_page, name="ai_result"),
+    # 职位列表页面（如果 Wagtail 中没有 jobs 页面，使用这个视图）
+    path("jobs/", jobs_views.job_index_view, name="job_index"),
     path("api/upload-resume/", jobs_views.upload_resume_api, name="upload_resume_api"),
     path("api/analyze-resume/", jobs_views.analyze_resume_api, name="analyze_resume_api"),
     # 收藏职位API

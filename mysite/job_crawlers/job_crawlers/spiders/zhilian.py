@@ -38,7 +38,7 @@ class ZhilianSpider(scrapy.Spider):
     }
     
     def start_requests(self):
-        keywords = ['Python', 'Java', '前端', '后端', '算法']
+        keywords = ['艺术', '美术设计', '插画师', '原画师', '游戏美术']
         city = '成都'  
         
         for keyword in keywords:

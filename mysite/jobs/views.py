@@ -445,4 +445,59 @@ def ai_result_page(request):
         'has_report': has_report,
     })
 
+def job_index_view(request):
+    """职位列表页面视图（备选方案，如果 Wagtail 中没有 jobs 页面）"""
+    from jobs.models import JobPage, JobIndexPage
+    from django.db.models import Q
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    
+    # 尝试从 Wagtail 获取 JobIndexPage
+    job_index = JobIndexPage.objects.filter(slug='jobs').live().first()
+    
+    if job_index:
+        # 如果 Wagtail 页面存在，使用 Wagtail 的页面服务机制
+        # 这里重定向到 Wagtail 页面
+        from django.shortcuts import redirect
+        return redirect(job_index.url)
+    
+    # 如果 Wagtail 页面不存在，使用视图函数处理
+    # 获取所有已发布的职位
+    jobs = JobPage.objects.live().specific()
+    
+    # 1. 关键词搜索
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        jobs = jobs.filter(
+            Q(job_title__icontains=search_query) |
+            Q(company_name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+    
+    # 2. 按职位类型筛选
+    job_type = request.GET.get('job_type', '').strip()
+    if job_type:
+        jobs = jobs.filter(job_type=job_type)
+    
+    # 3. 分页
+    paginator = Paginator(jobs, 20)
+    page = request.GET.get('page', 1)
+    try:
+        jobs = paginator.page(page)
+    except PageNotAnInteger:
+        jobs = paginator.page(1)
+    except EmptyPage:
+        jobs = paginator.page(paginator.num_pages)
+    
+    # 为每个职位添加收藏状态
+    if request.user.is_authenticated:
+        for job in jobs:
+            job.is_saved_by_user = job.is_saved_by_user(request.user)
+    
+    return render(request, 'jobs/job_index_page.html', {
+        'job_pages': jobs,
+        'search_query': search_query,
+        'job_types': JobPage.JOB_TYPES,
+    })
+
 # Create your views here.
