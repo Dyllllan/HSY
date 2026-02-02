@@ -446,7 +446,9 @@
 
 <!-- 功能列表 -->
 <div class="features-section">
-    <a href="#" class="feature-item">
+    <a href="{% if profile.resume %}{{ profile.resume.url }}{% else %}/recommendations/{% endif %}" 
+       class="feature-item" 
+       {% if profile.resume %}target="_blank"{% endif %}>
         <div class="feature-icon blue">
             <i class="bi bi-file-earmark-pdf"></i>
         </div>
@@ -463,13 +465,19 @@
         <i class="bi bi-chevron-right feature-arrow"></i>
     </a>
     
-    <a href="/recommendations/" class="feature-item">
+    <a href="/AIresult/" class="feature-item">
         <div class="feature-icon purple">
             <i class="bi bi-stars"></i>
         </div>
         <div class="feature-content">
             <div class="feature-title">AI 能力测评中心</div>
-            <div class="feature-subtitle">解锁你的职场潜力</div>
+            <div class="feature-subtitle">
+                {% if profile.ai_report %}
+                查看你的AI分析报告
+                {% else %}
+                解锁你的职场潜力
+                {% endif %}
+            </div>
         </div>
         <i class="bi bi-chevron-right feature-arrow"></i>
     </a>

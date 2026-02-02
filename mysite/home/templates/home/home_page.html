@@ -82,9 +82,9 @@
     }
     
     .category-btn.active {
-        background: #6B8E9F;
+        background: #1e40af;
         color: #ffffff;
-        border-color: #6B8E9F;
+        border-color: #1e40af;
     }
     
     /* AI推荐横幅 */
@@ -543,17 +543,13 @@
                     <div class="job-title">{{ job.job_title }}</div>
                     <div class="job-company">{{ job.company_name }}</div>
                 </div>
+                {% if user.is_authenticated %}
                 <div style="display: flex; align-items: flex-start; gap: 8px;">
-                    <div class="match-badge">
-                        <div class="match-icon">DAO</div>
-                        <span>匹配98%</span>
-                    </div>
-                    {% if user.is_authenticated %}
                     <button class="save-job-btn" data-job-id="{{ job.id }}" onclick="event.stopPropagation(); toggleSaveJob({{ job.id }}, this);" title="收藏职位">
                         <i class="bi bi-bookmark{% if job.is_saved_by_user %}-fill{% endif %}"></i>
                     </button>
-                    {% endif %}
                 </div>
+                {% endif %}
             </div>
             
             <div class="job-tags">

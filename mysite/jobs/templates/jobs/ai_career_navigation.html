@@ -453,6 +453,53 @@
         padding: 20px;
     }
     
+    /* 测试上传按钮 */
+    .test-upload-section {
+        text-align: center;
+        padding: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 20px;
+    }
+    
+    .test-upload-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.3);
+    }
+    
+    .test-upload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(156, 136, 255, 0.4);
+    }
+    
+    .test-upload-btn:active {
+        transform: translateY(0);
+    }
+    
+    .test-upload-btn i {
+        font-size: 16px;
+    }
+    
+    #test-resume-input {
+        display: none;
+    }
+    
+    .test-upload-hint {
+        font-size: 12px;
+        color: #999999;
+        margin-top: 12px;
+    }
+    
     /* 底部导航栏 */
     .bottom-nav {
         position: fixed;
@@ -651,13 +698,23 @@
             <div>正在分析简历，请稍候...</div>
         </div>
         <div class="report-error" id="report-error" style="display: none;"></div>
-        <div style="text-align: center; color: #999999; padding: 40px 20px;">
+        <div id="report-info" style="text-align: center; color: #999999; padding: 40px 20px;">
             <i class="bi bi-info-circle" style="font-size: 32px; margin-bottom: 12px;"></i>
             <div>此模块用于接入外部AI API进行简历分析</div>
             <div style="font-size: 12px; margin-top: 8px; color: #666666;">
                 当前API接口: /api/analyze-resume/<br>
                 状态: 已配置，但未接入实际外部AI服务（目前返回模拟数据）
             </div>
+        </div>
+        
+        <!-- 测试上传按钮 -->
+        <div class="test-upload-section" id="test-upload-section">
+            <button class="test-upload-btn" onclick="document.getElementById('test-resume-input').click()">
+                <i class="bi bi-cloud-upload"></i>
+                <span>测试上传简历</span>
+            </button>
+            <input type="file" id="test-resume-input" accept=".pdf,.docx" />
+            <div class="test-upload-hint">支持 PDF、DOCX 格式，最大 10MB</div>
         </div>
     </div>
 </div>
@@ -684,11 +741,99 @@
     const reportContent = document.getElementById('report-content');
     const reportLoading = document.getElementById('report-loading');
     const reportError = document.getElementById('report-error');
+    const testResumeInput = document.getElementById('test-resume-input');
     
     // 页面加载时显示报告容器
     document.addEventListener('DOMContentLoaded', function() {
         reportContainer.classList.add('show');
     });
+    
+    // 测试上传按钮文件选择处理
+    testResumeInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            handleTestFileUpload(file);
+        }
+    });
+    
+    // 处理测试文件上传
+    function handleTestFileUpload(file) {
+        // 验证文件类型
+        const validTypes = ['application/pdf'];
+        const validExtensions = ['.pdf', '.docx'];
+        const fileName = file.name.toLowerCase();
+        const isValidType = validTypes.includes(file.type) || validExtensions.some(ext => fileName.endsWith(ext));
+        
+        if (!isValidType) {
+            alert('请上传 PDF 或 DOCX 格式的简历文件');
+            testResumeInput.value = '';
+            return;
+        }
+        
+        // 验证文件大小（限制为10MB）
+        if (file.size > 10 * 1024 * 1024) {
+            alert('文件大小不能超过 10MB');
+            testResumeInput.value = '';
+            return;
+        }
+        
+        // 更新步骤进度 - 显示正在上传
+        updateStepProgress(1);
+        
+        // 隐藏信息提示和上传按钮，显示加载状态
+        const infoDiv = document.getElementById('report-info');
+        const uploadSection = document.getElementById('test-upload-section');
+        if (infoDiv) {
+            infoDiv.style.display = 'none';
+        }
+        if (uploadSection) {
+            uploadSection.style.display = 'none';
+        }
+        reportContent.style.display = 'none';
+        reportError.style.display = 'none';
+        reportLoading.style.display = 'block';
+        
+        // 上传文件
+        const formData = new FormData();
+        formData.append('resume', file);
+        
+        fetch('/api/upload-resume/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateStepProgress(2);
+                // 调用AI分析接口
+                analyzeResume(data.file_id);
+            } else {
+                showError(data.message || '文件上传失败，请重试');
+                resetTestUpload();
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            showError('网络错误，请重试');
+            resetTestUpload();
+        });
+    }
+    
+    // 重置测试上传
+    function resetTestUpload() {
+        testResumeInput.value = '';
+        const infoDiv = document.getElementById('report-info');
+        const uploadSection = document.getElementById('test-upload-section');
+        if (infoDiv) {
+            infoDiv.style.display = 'block';
+        }
+        if (uploadSection) {
+            uploadSection.style.display = 'block';
+        }
+    }
     
     /**
      * 调用外部AI API分析简历
@@ -718,17 +863,36 @@
             if (data.success) {
                 // 更新步骤进度 - 分析完成
                 updateStepProgress(3);
+                // 隐藏信息提示和上传按钮
+                const infoDiv = document.getElementById('report-info');
+                const uploadSection = document.getElementById('test-upload-section');
+                if (infoDiv) {
+                    infoDiv.style.display = 'none';
+                }
+                if (uploadSection) {
+                    uploadSection.style.display = 'none';
+                }
                 // 显示报告内容
                 reportContent.textContent = data.report || '分析完成，但未生成报告内容。';
                 reportContent.style.display = 'block';
             } else {
                 showError(data.message || '简历分析失败，请重试');
+                // 显示上传按钮以便重试
+                const uploadSection = document.getElementById('test-upload-section');
+                if (uploadSection) {
+                    uploadSection.style.display = 'block';
+                }
             }
         })
         .catch(error => {
             console.error('Analysis error:', error);
             reportLoading.style.display = 'none';
             showError('网络错误，请重试');
+            // 显示上传按钮以便重试
+            const uploadSection = document.getElementById('test-upload-section');
+            if (uploadSection) {
+                uploadSection.style.display = 'block';
+            }
         });
     }
     

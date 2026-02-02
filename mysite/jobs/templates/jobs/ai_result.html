@@ -1,0 +1,762 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI能力测评报告 - 学生求职{% endblock %}
+
+{% block body_class %}ai-result-page{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<style>
+    body.ai-result-page {
+        background: #F5F5F5;
+        padding-bottom: 60px; /* 为底部导航栏留出空间 */
+    }
+    
+    /* 页面头部 */
+    .result-header {
+        background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
+        padding: 24px 16px;
+        color: #ffffff;
+        margin-bottom: 12px;
+    }
+    
+    .result-header h1 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .result-header .back-btn {
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        transition: opacity 0.2s;
+    }
+    
+    .result-header .back-btn:hover {
+        opacity: 0.8;
+    }
+    
+    .result-header .subtitle {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    
+    /* 报告容器 */
+    .report-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 24px;
+        margin: 0 16px 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .report-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #F5F5F5;
+    }
+    
+    .report-date {
+        font-size: 12px;
+        color: #999999;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .report-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: #E6F4FF;
+        color: #6B8E9F;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .report-content {
+        color: #333333;
+        font-size: 15px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        position: relative;
+    }
+    
+    /* 报告装饰背景 */
+    .report-content::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle, rgba(156, 136, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        z-index: 0;
+        pointer-events: none;
+    }
+    
+    .report-content::after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: -20px;
+        width: 80px;
+        height: 80px;
+        background: radial-gradient(circle, rgba(79, 172, 254, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        z-index: 0;
+        pointer-events: none;
+    }
+    
+    /* 报告段落样式 */
+    .report-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .report-section {
+        margin-bottom: 24px;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.03) 0%, rgba(79, 172, 254, 0.03) 100%);
+        border-radius: 12px;
+        border-left: 4px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .report-section:nth-child(1) {
+        border-left-color: #9C88FF;
+    }
+    
+    .report-section:nth-child(2) {
+        border-left-color: #4A90E2;
+    }
+    
+    .report-section:nth-child(3) {
+        border-left-color: #52C41A;
+    }
+    
+    .report-section:nth-child(4) {
+        border-left-color: #FF6B35;
+    }
+    
+    .report-section:nth-child(5) {
+        border-left-color: #FFD93D;
+    }
+    
+    .report-section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #333333;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid rgba(156, 136, 255, 0.1);
+    }
+    
+    .report-section-title .icon-wrapper {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+    
+    .report-section-title .icon-wrapper.purple {
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.2) 0%, rgba(123, 104, 238, 0.2) 100%);
+    }
+    
+    .report-section-title .icon-wrapper.blue {
+        background: linear-gradient(135deg, rgba(74, 144, 226, 0.2) 0%, rgba(53, 122, 189, 0.2) 100%);
+    }
+    
+    .report-section-title .icon-wrapper.green {
+        background: linear-gradient(135deg, rgba(82, 196, 26, 0.2) 0%, rgba(69, 160, 9, 0.2) 100%);
+    }
+    
+    .report-section-title .icon-wrapper.orange {
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.2) 0%, rgba(255, 91, 24, 0.2) 100%);
+    }
+    
+    .report-section-title .icon-wrapper.yellow {
+        background: linear-gradient(135deg, rgba(255, 217, 61, 0.2) 0%, rgba(255, 193, 7, 0.2) 100%);
+    }
+    
+    .report-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .report-item:last-child {
+        border-bottom: none;
+    }
+    
+    .report-item-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(156, 136, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 12px;
+        color: #9C88FF;
+    }
+    
+    .report-item-content {
+        flex: 1;
+    }
+    
+    .report-item-label {
+        font-weight: 600;
+        color: #666666;
+        margin-right: 8px;
+    }
+    
+    .report-item-value {
+        color: #333333;
+    }
+    
+    .report-score {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: linear-gradient(135deg, rgba(82, 196, 26, 0.1) 0%, rgba(69, 160, 9, 0.1) 100%);
+        color: #52C41A;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    .report-list {
+        list-style: none;
+        padding: 0;
+        margin: 16px 0;
+    }
+    
+    .report-list-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        position: relative;
+        padding-left: 28px;
+    }
+    
+    .report-list-item::before {
+        content: '✦';
+        position: absolute;
+        left: 0;
+        color: #9C88FF;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .report-list-item:nth-child(2)::before {
+        content: '★';
+        color: #4A90E2;
+    }
+    
+    .report-list-item:nth-child(3)::before {
+        content: '◆';
+        color: #52C41A;
+    }
+    
+    .report-list-item:nth-child(4)::before {
+        content: '●';
+        color: #FF6B35;
+    }
+    
+    .report-highlight {
+        display: inline-block;
+        padding: 2px 8px;
+        background: linear-gradient(135deg, rgba(255, 217, 61, 0.2) 0%, rgba(255, 193, 7, 0.2) 100%);
+        border-radius: 4px;
+        font-weight: 600;
+        color: #FF8C00;
+    }
+    
+    .report-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(156, 136, 255, 0.3) 50%, transparent 100%);
+        margin: 24px 0;
+        position: relative;
+    }
+    
+    .report-divider::before {
+        content: '◆';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: #ffffff;
+        padding: 0 12px;
+        color: #9C88FF;
+        font-size: 12px;
+    }
+    
+    /* 空状态 */
+    .empty-state {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 60px 24px;
+        margin: 0 16px 12px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.1) 0%, rgba(123, 104, 238, 0.1) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+    }
+    
+    .empty-state-icon i {
+        font-size: 40px;
+        color: #9C88FF;
+    }
+    
+    .empty-state-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333333;
+        margin-bottom: 12px;
+    }
+    
+    .empty-state-text {
+        font-size: 14px;
+        color: #999999;
+        margin-bottom: 24px;
+        line-height: 1.6;
+    }
+    
+    .empty-state-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.3);
+    }
+    
+    .empty-state-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(156, 136, 255, 0.4);
+        color: #ffffff;
+    }
+    
+    /* 底部导航栏 */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #E0E0E0;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0 8px 0;
+        z-index: 1000;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        min-height: 60px;
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 16px;
+        color: #999999;
+        text-decoration: none;
+        font-size: 12px;
+        transition: color 0.2s;
+        min-height: 50px;
+    }
+    
+    .nav-item.active {
+        color: #6B8E9F;
+    }
+    
+    .nav-icon {
+        font-size: 22px;
+    }
+    
+    /* AI规划按钮 - 紫色圆形显眼按钮 */
+    .nav-item.ai-planning-btn {
+        position: relative;
+        margin-top: -20px; /* 向上突出 */
+        z-index: 10;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    /* 悬浮动画 */
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    /* 脉冲动画 */
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4), 0 0 0 0 rgba(156, 136, 255, 0.7);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4), 0 0 0 8px rgba(156, 136, 255, 0);
+        }
+    }
+    
+    /* 图标旋转动画 */
+    @keyframes rotate {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    
+    /* 光晕效果 */
+    @keyframes glow {
+        0%, 100% {
+            opacity: 0.8;
+        }
+        50% {
+            opacity: 1;
+        }
+    }
+    
+    .nav-item.ai-planning-btn .nav-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4);
+        transition: all 0.3s ease;
+        margin-bottom: 4px;
+        position: relative;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    /* 光晕环 */
+    .nav-item.ai-planning-btn .nav-icon-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.3) 0%, rgba(123, 104, 238, 0.3) 100%);
+        z-index: -1;
+        animation: glow 2s ease-in-out infinite;
+    }
+    
+    .nav-item.ai-planning-btn:hover .nav-icon-wrapper {
+        transform: scale(1.15);
+        box-shadow: 0 6px 20px rgba(156, 136, 255, 0.6), 0 0 0 4px rgba(156, 136, 255, 0.2);
+        animation: none; /* 悬停时停止脉冲 */
+    }
+    
+    .nav-item.ai-planning-btn:active .nav-icon-wrapper {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.4);
+    }
+    
+    .nav-item.ai-planning-btn .nav-icon {
+        color: #ffffff;
+        font-size: 24px;
+        transition: transform 0.3s ease;
+    }
+    
+    /* 悬停时图标旋转 */
+    .nav-item.ai-planning-btn:hover .nav-icon {
+        animation: rotate 1s linear infinite;
+    }
+    
+    .nav-item.ai-planning-btn span {
+        color: #9C88FF;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-item.ai-planning-btn:hover span {
+        color: #7B68EE;
+        transform: scale(1.05);
+    }
+    
+    .nav-item.ai-planning-btn.active span {
+        color: #9C88FF;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 页面头部 -->
+<div class="result-header">
+    <a href="{% url 'account_profile' %}" class="back-btn">
+        <i class="bi bi-arrow-left"></i>
+        <span>返回</span>
+    </a>
+    <h1>
+        <i class="bi bi-stars"></i>
+        AI能力测评报告
+    </h1>
+    <div class="subtitle">基于AI深度分析的职场竞争力评估</div>
+</div>
+
+{% if has_report %}
+<!-- 报告内容 -->
+<div class="report-card">
+    <div class="report-meta">
+        <div class="report-date">
+            <i class="bi bi-clock"></i>
+            <span>
+                {% if report_updated_at %}
+                更新时间：{{ report_updated_at|date:"Y年m月d日 H:i" }}
+                {% else %}
+                报告已生成
+                {% endif %}
+            </span>
+        </div>
+        <div class="report-status">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>已完成</span>
+        </div>
+    </div>
+    <div class="report-content" id="report-content">{{ ai_report }}</div>
+</div>
+{% else %}
+<!-- 空状态 -->
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="bi bi-file-earmark-text"></i>
+    </div>
+    <div class="empty-state-title">暂无AI分析报告</div>
+    <div class="empty-state-text">
+        上传您的简历，让AI为您深度分析职场竞争力<br>
+        获取专属的12个职业维度潜能评估
+    </div>
+    <a href="/recommendations/" class="empty-state-btn">
+        <i class="bi bi-cloud-upload"></i>
+        <span>立即上传简历</span>
+    </a>
+</div>
+{% endif %}
+
+<!-- 底部导航栏 -->
+<nav class="bottom-nav">
+    <a href="/" class="nav-item">
+        <i class="bi bi-house-fill nav-icon"></i>
+        <span>首页</span>
+    </a>
+    <a href="/recommendations/" class="nav-item ai-planning-btn">
+        <div class="nav-icon-wrapper">
+            <i class="bi bi-stars nav-icon"></i>
+        </div>
+        <span>AI 规划</span>
+    </a>
+    <a href="{% url 'account_profile' %}" class="nav-item active">
+        <i class="bi bi-person nav-icon"></i>
+        <span>我的</span>
+    </a>
+</nav>
+
+<script>
+    // 美化报告内容，添加图案元素
+    document.addEventListener('DOMContentLoaded', function() {
+        const reportContent = document.getElementById('report-content');
+        if (!reportContent) return;
+        
+        let content = reportContent.textContent || reportContent.innerText;
+        let html = '';
+        
+        // 定义图标映射
+        const iconMap = {
+            '📊': { icon: 'bi-bar-chart-line', color: 'purple', title: '基本信息分析' },
+            '💼': { icon: 'bi-briefcase', color: 'blue', title: '技能匹配度' },
+            '🎯': { icon: 'bi-bullseye', color: 'green', title: '岗位推荐' },
+            '💡': { icon: 'bi-lightbulb', color: 'orange', title: '提升建议' },
+            '📈': { icon: 'bi-graph-up', color: 'yellow', title: '竞争力排名' },
+        };
+        
+        // 按行分割内容
+        const lines = content.split('\n').filter(line => line.trim());
+        let currentSection = null;
+        let sectionLines = [];
+        
+        function closeSection() {
+            if (currentSection && sectionLines.length > 0) {
+                html += '<div class="report-section">';
+                html += `<div class="report-section-title">`;
+                html += `<div class="icon-wrapper ${currentSection.color}">`;
+                html += `<i class="bi ${currentSection.icon}"></i>`;
+                html += `</div>`;
+                html += `<span>${currentSection.title}</span>`;
+                html += `</div>`;
+                
+                // 处理section内容
+                sectionLines.forEach(line => {
+                    line = line.trim();
+                    if (!line) return;
+                    
+                    // 处理列表项
+                    if (line.match(/^\d+\./)) {
+                        html += `<div class="report-list-item">${line.replace(/^\d+\.\s*/, '')}</div>`;
+                    }
+                    // 处理带分数的项
+                    else if (line.includes('分') || line.includes(':') || line.includes('：')) {
+                        const parts = line.split(/[:：]/);
+                        if (parts.length === 2) {
+                            const label = parts[0].replace(/^[-•]\s*/, '').trim();
+                            let value = parts[1].trim();
+                            
+                            // 检查是否是分数
+                            if (value.includes('分')) {
+                                value = `<span class="report-score">${value}</span>`;
+                            }
+                            
+                            html += '<div class="report-item">';
+                            html += '<div class="report-item-icon"><i class="bi bi-check-circle"></i></div>';
+                            html += '<div class="report-item-content">';
+                            html += `<span class="report-item-label">${label}</span>`;
+                            html += `<span class="report-item-value">${value}</span>`;
+                            html += '</div></div>';
+                        } else {
+                            html += `<div class="report-item"><div class="report-item-content">${line}</div></div>`;
+                        }
+                    }
+                    // 处理只有标签和值的行（没有冒号）
+                    else if (line.match(/^[^:：]+(分|%|前)/)) {
+                        html += '<div class="report-item">';
+                        html += '<div class="report-item-icon"><i class="bi bi-star"></i></div>';
+                        html += `<div class="report-item-content">${line}</div>`;
+                        html += '</div>';
+                    }
+                    // 处理标题行（包含emoji）
+                    else if (line.match(/^【.*】/)) {
+                        html += `<div style="text-align: center; font-size: 20px; font-weight: 700; color: #9C88FF; margin-bottom: 24px; padding: 16px; background: linear-gradient(135deg, rgba(156, 136, 255, 0.1) 0%, rgba(123, 104, 238, 0.1) 100%); border-radius: 12px;">${line}</div>`;
+                    }
+                    // 处理普通文本
+                    else {
+                        // 检查是否包含高亮内容
+                        if (line.includes('前') && line.includes('%')) {
+                            line = line.replace(/(前\d+%)/g, '<span class="report-highlight">$1</span>');
+                        }
+                        // 检查是否包含百分比
+                        if (line.match(/\d+%/)) {
+                            line = line.replace(/(\d+%)/g, '<span class="report-highlight">$1</span>');
+                        }
+                        html += `<div class="report-item"><div class="report-item-content">${line}</div></div>`;
+                    }
+                });
+                
+                html += '</div>';
+                sectionLines = [];
+            }
+        }
+        
+        // 处理每一行
+        lines.forEach((line, index) => {
+            line = line.trim();
+            if (!line) return;
+            
+            // 检查是否是新的section标题（包含emoji）
+            let foundSection = false;
+            for (const [emoji, config] of Object.entries(iconMap)) {
+                if (line.includes(emoji)) {
+                    closeSection();
+                    currentSection = config;
+                    foundSection = true;
+                    // 移除emoji，保留文本
+                    line = line.replace(emoji, '').trim();
+                    if (line) {
+                        sectionLines.push(line);
+                    }
+                    break;
+                }
+            }
+            
+            if (!foundSection) {
+                if (currentSection) {
+                    sectionLines.push(line);
+                } else {
+                    // 处理开头的标题
+                    if (line.match(/^【.*】/)) {
+                        html += `<div style="text-align: center; font-size: 20px; font-weight: 700; color: #9C88FF; margin-bottom: 24px; padding: 16px; background: linear-gradient(135deg, rgba(156, 136, 255, 0.1) 0%, rgba(123, 104, 238, 0.1) 100%); border-radius: 12px;">${line}</div>`;
+                    } else {
+                        html += `<div class="report-item"><div class="report-item-content">${line}</div></div>`;
+                    }
+                }
+            }
+        });
+        
+        // 关闭最后一个section
+        closeSection();
+        
+        // 添加分隔线
+        html = html.replace(/<\/div><div class="report-section">/g, '</div><div class="report-divider"></div><div class="report-section">');
+        
+        // 处理最后的注释行
+        if (html.includes('注：')) {
+            html = html.replace(/(注：.*)/g, '<div class="report-divider"></div><div style="padding: 16px; background: rgba(156, 136, 255, 0.05); border-radius: 8px; font-size: 13px; color: #666666; margin-top: 24px; border-left: 3px solid #9C88FF;">$1</div>');
+        }
+        
+        // 更新HTML
+        if (html) {
+            reportContent.innerHTML = html;
+        } else {
+            // 如果没有解析出内容，使用原始文本
+            reportContent.innerHTML = content.replace(/\n/g, '<br>');
+        }
+    });
+</script>
+{% endblock %}

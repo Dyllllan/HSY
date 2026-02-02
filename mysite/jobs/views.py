@@ -312,6 +312,15 @@ def analyze_resume_api(request):
         report = generate_ai_report(file, request.user)
         file.close()
         
+        # 保存分析结果到用户档案
+        try:
+            profile, created = StudentProfile.objects.get_or_create(user=request.user)
+            profile.ai_report = report
+            profile.ai_report_updated_at = timezone.now()
+            profile.save()
+        except Exception as e:
+            print(f'保存AI报告失败: {str(e)}')
+        
         return JsonResponse({
             'success': True,
             'report': report,
@@ -380,13 +389,13 @@ def generate_ai_report(file, user):
 根据您的简历分析，以下是您的职场竞争力评估：
 
 📊 基本信息分析
-- 文件类型: {file_name.split('.')[-1].upper()}
-- 分析时间: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+文件类型: {file_name.split('.')[-1].upper()}
+分析时间: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 💼 技能匹配度
-- 技术技能: 85分
-- 软技能: 78分
-- 综合匹配度: 82分
+技术技能: 85分
+软技能: 78分
+综合匹配度: 82分
 
 🎯 岗位推荐
 基于您的简历内容，我们为您推荐以下类型的岗位：
@@ -406,5 +415,34 @@ def generate_ai_report(file, user):
 """
     
     return report
+
+@login_required
+def ai_result_page(request):
+    """AI分析结果页面"""
+    user = request.user
+    
+    # 获取学生档案
+    try:
+        profile = user.student_profile
+    except StudentProfile.DoesNotExist:
+        profile = None
+    
+    # 获取AI分析报告
+    ai_report = None
+    report_updated_at = None
+    has_report = False
+    
+    if profile:
+        ai_report = profile.ai_report
+        report_updated_at = profile.ai_report_updated_at
+        has_report = bool(ai_report and ai_report.strip())
+    
+    return render(request, 'jobs/ai_result.html', {
+        'profile': profile,
+        'user': user,
+        'ai_report': ai_report,
+        'report_updated_at': report_updated_at,
+        'has_report': has_report,
+    })
 
 # Create your views here.

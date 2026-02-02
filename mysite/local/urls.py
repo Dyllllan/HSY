@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/location-data/", jobs_views.get_location_data, name="location_data"),
     # AI职场导航
     path("recommendations/", jobs_views.ai_career_navigation, name="ai_career_navigation"),
+    path("AIresult/", jobs_views.ai_result_page, name="ai_result"),
     path("api/upload-resume/", jobs_views.upload_resume_api, name="upload_resume_api"),
     path("api/analyze-resume/", jobs_views.analyze_resume_api, name="analyze_resume_api"),
     # 收藏职位API

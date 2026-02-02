@@ -585,6 +585,20 @@ class StudentProfile(models.Model):
         help_text='用于搜索匹配的简历文本'
     )
     
+    # AI分析结果
+    ai_report = models.TextField(
+        'AI分析报告',
+        blank=True,
+        help_text='AI生成的职场竞争力分析报告'
+    )
+    
+    ai_report_updated_at = models.DateTimeField(
+        'AI报告更新时间',
+        null=True,
+        blank=True,
+        help_text='AI分析报告的最后更新时间'
+    )
+    
     # 状态与时间戳
     is_verified = models.BooleanField('已验证学生身份', default=False)
     last_active = models.DateTimeField('最后活跃时间', default=timezone.now)
