@@ -1,7 +1,8 @@
 from django.db import models
 from wagtail.models import Page
 from wagtail.fields import RichTextField
-from wagtail.admin.panels import FieldPanel,MultiFieldPanel
+from wagtail.admin.panels import FieldPanel, MultiFieldPanel, InlinePanel
+from wagtail.documents.models import Document
 from django.conf import settings
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -812,7 +813,7 @@ class StudentProfile(models.Model):
 
 
 class JobApplication(models.Model):
-     STATUS_CHOICES = [
+    STATUS_CHOICES = [
         ('saved', '已收藏'),
         ('applied', '已申请'),
         ('viewed', '已查看'),
@@ -821,47 +822,143 @@ class JobApplication(models.Model):
         ('accepted', '已接受'),
     ]
     
-     user = models.ForeignKey(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='job_applications'
     )
     
-     job_page = ParentalKey(
+    job_page = ParentalKey(
         'jobs.JobPage',
         on_delete=models.CASCADE,
         related_name='applications'
     )
     
-     status = models.CharField(
+    status = models.CharField(
         '申请状态',
         max_length=20,
         choices=STATUS_CHOICES,
         default='saved'
     )
     
-     applied_date = models.DateTimeField('申请时间', null=True, blank=True)
-     notes = models.TextField('备注', blank=True)
+    applied_date = models.DateTimeField('申请时间', null=True, blank=True)
+    notes = models.TextField('备注', blank=True)
     
     # 来源追踪
-     source = models.CharField('来源', max_length=50, default='website')
-     ip_address = models.GenericIPAddressField('IP地址', null=True, blank=True)
+    source = models.CharField('来源', max_length=50, default='website')
+    ip_address = models.GenericIPAddressField('IP地址', null=True, blank=True)
     
-     created_at = models.DateTimeField('创建时间', auto_now_add=True)
-     updated_at = models.DateTimeField('更新时间', auto_now=True)
+    created_at = models.DateTimeField('创建时间', auto_now_add=True)
+    updated_at = models.DateTimeField('更新时间', auto_now=True)
     
-     class Meta:
+    class Meta:
         unique_together = ['user', 'job_page']  # 防止重复收藏
         verbose_name = '职位申请'
         verbose_name_plural = '职位申请'
         ordering = ['-updated_at']
     
-     def __str__(self):
+    def __str__(self):
         return f"{self.user.email} - {self.job_page.job_title}"
     
-     def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):
         # 如果是第一次申请，记录申请时间
         if self.status == 'applied' and not self.applied_date:
             self.applied_date = timezone.now()
         super().save(*args, **kwargs)
+
+
+class ResumeIndexPage(Page):
+    """简历索引页面 - 用于管理所有用户上传的简历"""
+    intro = RichTextField(blank=True, verbose_name="页面介绍", help_text="显示在简历列表上方的介绍文字")
+    
+    content_panels = Page.content_panels + [
+        FieldPanel('intro'),
+    ]
+    
+    # 指定该页面下只能添加 ResumePage 类型的子页面
+    subpage_types = ['jobs.ResumePage']
+    
+    class Meta:
+        verbose_name = "简历索引页面"
+        verbose_name_plural = "简历索引页面"
+    
+    def get_context(self, request, *args, **kwargs):
+        """简历列表页的上下文"""
+        context = super().get_context(request, *args, **kwargs)
+        from django.db.models import Q
+        
+        # 获取所有简历页面
+        resume_pages = ResumePage.objects.child_of(self).live().specific()
+        
+        # 搜索功能
+        search_query = request.GET.get('q', '').strip()
+        if search_query:
+            resume_pages = resume_pages.filter(
+                Q(title__icontains=search_query) |
+                Q(student_name__icontains=search_query) |
+                Q(student_email__icontains=search_query)
+            )
+        
+        # 按上传时间排序（最新的在前）
+        resume_pages = resume_pages.order_by('-first_published_at')
+        
+        context['resume_pages'] = resume_pages
+        context['search_query'] = search_query
+        return context
+
+
+class ResumePage(Page):
+    """简历页面 - 存储用户上传的简历信息"""
+    # 关联的学生档案（通过user_id关联）
+    user_id = models.IntegerField('用户ID', help_text='关联的用户ID')
+    
+    # 学生基本信息
+    student_name = models.CharField('学生姓名', max_length=100, blank=True)
+    student_email = models.EmailField('学生邮箱', blank=True)
+    
+    # 简历文件（使用Wagtail的Document）
+    resume_document = models.ForeignKey(
+        Document,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+        verbose_name='简历文件'
+    )
+    
+    # 简历文本内容
+    resume_text = models.TextField('简历文本内容', blank=True, help_text='从简历中提取的文本内容')
+    
+    # AI提取的信息
+    ai_extracted_school = models.CharField('AI提取的学校', max_length=200, blank=True)
+    ai_extracted_major = models.CharField('AI提取的专业', max_length=200, blank=True)
+    ai_extracted_skills = models.JSONField('AI提取的核心技能', default=list, blank=True)
+    
+    # 上传时间
+    uploaded_at = models.DateTimeField('上传时间', auto_now_add=True)
+    
+    content_panels = Page.content_panels + [
+        MultiFieldPanel([
+            FieldPanel('user_id'),
+            FieldPanel('student_name'),
+            FieldPanel('student_email'),
+        ], heading="学生信息"),
+        FieldPanel('resume_document'),
+        FieldPanel('resume_text'),
+        MultiFieldPanel([
+            FieldPanel('ai_extracted_school'),
+            FieldPanel('ai_extracted_major'),
+            FieldPanel('ai_extracted_skills'),
+        ], heading="AI提取信息"),
+    ]
+    
+    # 不允许添加子页面
+    subpage_types = []
+    
+    class Meta:
+        verbose_name = "简历页面"
+        verbose_name_plural = "简历页面"
+    
+    def __str__(self):
+        return f"{self.student_name or self.student_email} - {self.title}"
 

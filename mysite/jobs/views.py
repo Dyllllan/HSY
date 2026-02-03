@@ -275,6 +275,8 @@ def upload_resume_api(request):
     from .resume_parser import extract_text_from_resume
     from .resume_extractor import extract_resume_info
     from django.conf import settings
+    from wagtail.documents.models import Document
+    from .models import ResumePage, ResumeIndexPage
     
     try:
         profile, created = StudentProfile.objects.get_or_create(user=request.user)
@@ -306,6 +308,78 @@ def upload_resume_api(request):
             profile.ai_extraction_updated_at = timezone.now()
             profile.save()
         
+        # 同步到Wagtail管理系统
+        try:
+            # 1. 获取或创建简历索引页面
+            resume_index = ResumeIndexPage.objects.live().first()
+            if not resume_index:
+                # 如果没有索引页面，尝试从根页面创建
+                from wagtail.models import Page
+                root = Page.get_first_root_node()
+                if root:
+                    resume_index = ResumeIndexPage(
+                        title="简历管理",
+                        slug="resumes"
+                    )
+                    root.add_child(instance=resume_index)
+                    resume_index.save_revision().publish()
+            
+            # 2. 创建或更新简历页面
+            resume_page = ResumePage.objects.filter(user_id=request.user.id).first()
+            
+            # 创建Wagtail Document（使用已保存的文件）
+            document_title = f"{request.user.get_full_name() or request.user.username}的简历_{timestamp}"
+            document = None
+            
+            # 检查是否已存在相同的文档
+            existing_doc = Document.objects.filter(title=document_title).first()
+            if existing_doc:
+                document = existing_doc
+            else:
+                # 创建新文档，使用profile.resume文件
+                document = Document(
+                    title=document_title,
+                    file=profile.resume
+                )
+                document.save()
+            
+            if resume_page:
+                # 更新现有页面
+                resume_page.title = f"{request.user.get_full_name() or request.user.username} - 简历"
+                resume_page.student_name = request.user.get_full_name() or ''
+                resume_page.student_email = request.user.email
+                resume_page.resume_document = document
+                resume_page.resume_text = resume_text or ''
+                resume_page.ai_extracted_school = profile.ai_extracted_school
+                resume_page.ai_extracted_major = profile.ai_extracted_major
+                resume_page.ai_extracted_skills = profile.ai_extracted_skills or []
+                resume_page.save()
+                # 如果页面未发布，则发布
+                if not resume_page.live:
+                    resume_page.save_revision().publish()
+                else:
+                    resume_page.save_revision()
+            else:
+                # 创建新页面
+                resume_page = ResumePage(
+                    title=f"{request.user.get_full_name() or request.user.username} - 简历",
+                    slug=f"resume-{request.user.id}-{timestamp}",
+                    user_id=request.user.id,
+                    student_name=request.user.get_full_name() or '',
+                    student_email=request.user.email,
+                    resume_document=document,
+                    resume_text=resume_text or '',
+                    ai_extracted_school=profile.ai_extracted_school,
+                    ai_extracted_major=profile.ai_extracted_major,
+                    ai_extracted_skills=profile.ai_extracted_skills or []
+                )
+                resume_index.add_child(instance=resume_page)
+                resume_page.save_revision().publish()
+        except Exception as wagtail_error:
+            # Wagtail同步失败不影响主流程，只记录错误
+            import traceback
+            logger.warning(f"同步到Wagtail失败: {str(wagtail_error)}\n{traceback.format_exc()}")
+    
         # 返回文件ID和提取状态
         return JsonResponse({
             'success': True,
