@@ -5,9 +5,12 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from wagtail.models import Page
+import logging
 from .models import JobPage, StudentProfile, JobApplication
 from .forms import CustomSignupForm
 from .location_utils import extract_provinces_from_jobs, extract_cities_from_jobs, extract_districts_from_jobs
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def personalized_recommendations(request):
@@ -233,7 +236,7 @@ def ai_career_navigation(request):
 
 @login_required
 def upload_resume_api(request):
-    """API: 上传简历文件"""
+    """API: 上传简历文件并进行初步AI提取"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': '仅支持POST请求'})
     
@@ -255,6 +258,9 @@ def upload_resume_api(request):
     # 保存文件到用户档案
     import os
     from datetime import datetime
+    from .resume_parser import extract_text_from_resume
+    from .resume_extractor import extract_resume_info
+    from django.conf import settings
     
     try:
         profile, created = StudentProfile.objects.get_or_create(user=request.user)
@@ -265,15 +271,37 @@ def upload_resume_api(request):
         
         # 保存文件
         profile.resume.save(file_name, file, save=True)
-        file_path = profile.resume.name
+        file_path = os.path.join(settings.MEDIA_ROOT, profile.resume.name)
         
-        # 返回文件ID（使用文件路径作为ID）
+        # 提取简历文本
+        resume_text = extract_text_from_resume(file_path)
+        if resume_text:
+            profile.resume_text = resume_text
+            profile.save(update_fields=['resume_text'])
+            
+            # 进行AI初步提取
+            extracted_info = extract_resume_info(resume_text)
+            
+            # 保存提取的信息
+            profile.ai_extracted_school = extracted_info.get('school', '')
+            profile.ai_extracted_major = extracted_info.get('major', '')
+            profile.ai_extracted_internship_summary = extracted_info.get('internship_summary', '')
+            profile.ai_extracted_hobbies = extracted_info.get('hobbies', '')
+            profile.ai_extracted_skills = extracted_info.get('skills', [])
+            profile.ai_extraction_completed = True
+            profile.ai_extraction_updated_at = timezone.now()
+            profile.save()
+        
+        # 返回文件ID和提取状态
         return JsonResponse({
             'success': True,
-            'file_id': file_path,
-            'message': '文件上传成功'
+            'file_id': profile.resume.name,
+            'extraction_completed': profile.ai_extraction_completed,
+            'message': '文件上传成功，AI提取完成' if resume_text else '文件上传成功'
         })
     except Exception as e:
+        import traceback
+        logger.error(f"上传简历失败: {str(e)}\n{traceback.format_exc()}")
         return JsonResponse({
             'success': False,
             'message': f'文件保存失败: {str(e)}'
@@ -431,6 +459,12 @@ def generate_ai_report(file, user):
             'user_id': user.id,
             'email': user.email,
             'preferred_job_types': profile.get_preferred_job_types_list() if hasattr(profile, 'get_preferred_job_types_list') else [],
+            # 添加用户确认的简历信息
+            'confirmed_school': profile.ai_extracted_school or '',
+            'confirmed_major': profile.ai_extracted_major or '',
+            'confirmed_internship': profile.ai_extracted_internship_summary or '',
+            'confirmed_hobbies': profile.ai_extracted_hobbies or '',
+            'confirmed_skills': profile.ai_extracted_skills or [],
         }
     except:
         pass
@@ -450,6 +484,54 @@ def generate_ai_report(file, user):
     return report
 
 @login_required
+@login_required
+def edit_resume_info(request):
+    """简历信息编辑页面"""
+    user = request.user
+    
+    # 获取学生档案
+    try:
+        profile = user.student_profile
+    except StudentProfile.DoesNotExist:
+        profile = None
+    
+    if not profile:
+        messages.warning(request, '请先完善个人档案')
+        return redirect('account_profile')
+    
+    # 如果没有简历，重定向到上传页面
+    if not profile.resume:
+        messages.info(request, '请先上传简历')
+        return redirect('ai_career_navigation')
+    
+    # 如果没有完成AI提取，尝试提取
+    if not profile.ai_extraction_completed:
+        from .resume_parser import extract_text_from_resume
+        from .resume_extractor import extract_resume_info
+        from django.conf import settings
+        import os
+        
+        try:
+            file_path = os.path.join(settings.MEDIA_ROOT, profile.resume.name)
+            resume_text = extract_text_from_resume(file_path)
+            if resume_text:
+                extracted_info = extract_resume_info(resume_text)
+                profile.ai_extracted_school = extracted_info.get('school', '')
+                profile.ai_extracted_major = extracted_info.get('major', '')
+                profile.ai_extracted_internship_summary = extracted_info.get('internship_summary', '')
+                profile.ai_extracted_hobbies = extracted_info.get('hobbies', '')
+                profile.ai_extracted_skills = extracted_info.get('skills', [])
+                profile.ai_extraction_completed = True
+                profile.ai_extraction_updated_at = timezone.now()
+                profile.save()
+        except Exception as e:
+            logger.error(f"自动提取简历信息失败: {str(e)}")
+    
+    return render(request, 'jobs/edit_resume_info.html', {
+        'profile': profile,
+        'user': user,
+    })
+
 def ai_result_page(request):
     """AI分析结果页面"""
     user = request.user
@@ -464,11 +546,20 @@ def ai_result_page(request):
     ai_report = None
     report_updated_at = None
     has_report = False
+    parsed_report = None
+    parsed_report_json = None
     
     if profile:
         ai_report = profile.ai_report
         report_updated_at = profile.ai_report_updated_at
         has_report = bool(ai_report and ai_report.strip())
+        
+        # 解析报告内容
+        if has_report:
+            from .report_parser import parse_ai_report
+            import json
+            parsed_report = parse_ai_report(ai_report)
+            parsed_report_json = json.dumps(parsed_report, ensure_ascii=False)
     
     return render(request, 'jobs/ai_result.html', {
         'profile': profile,
@@ -476,7 +567,123 @@ def ai_result_page(request):
         'ai_report': ai_report,
         'report_updated_at': report_updated_at,
         'has_report': has_report,
+        'parsed_report': parsed_report,
+        'parsed_report_json': parsed_report_json,
     })
+
+@login_required
+def save_resume_info_api(request):
+    """API: 保存简历信息（不触发完整分析）"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': '仅支持POST请求'})
+    
+    try:
+        profile = request.user.student_profile
+    except StudentProfile.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '请先完善个人档案'})
+    
+    import json
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': '无效的请求数据'})
+    
+    # 更新字段
+    if 'school' in data:
+        profile.ai_extracted_school = data['school'].strip()
+    if 'major' in data:
+        profile.ai_extracted_major = data['major'].strip()
+    if 'internship_summary' in data:
+        profile.ai_extracted_internship_summary = data['internship_summary'].strip()
+    if 'hobbies' in data:
+        profile.ai_extracted_hobbies = data['hobbies'].strip()
+    if 'skills' in data:
+        # 确保skills是列表
+        skills = data['skills']
+        if isinstance(skills, list):
+            profile.ai_extracted_skills = [s.strip() for s in skills if s.strip()]
+        else:
+            profile.ai_extracted_skills = []
+    
+    profile.save()
+    
+    return JsonResponse({
+        'success': True,
+        'message': '保存成功'
+    })
+
+@login_required
+def confirm_resume_info_api(request):
+    """API: 确认简历信息并触发完整AI分析"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': '仅支持POST请求'})
+    
+    try:
+        profile = request.user.student_profile
+    except StudentProfile.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '请先完善个人档案'})
+    
+    if not profile.resume:
+        return JsonResponse({'success': False, 'message': '请先上传简历'})
+    
+    import json
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': '无效的请求数据'})
+    
+    # 更新字段
+    if 'school' in data:
+        profile.ai_extracted_school = data['school'].strip()
+    if 'major' in data:
+        profile.ai_extracted_major = data['major'].strip()
+    if 'internship_summary' in data:
+        profile.ai_extracted_internship_summary = data['internship_summary'].strip()
+    if 'hobbies' in data:
+        profile.ai_extracted_hobbies = data['hobbies'].strip()
+    if 'skills' in data:
+        skills = data['skills']
+        if isinstance(skills, list):
+            profile.ai_extracted_skills = [s.strip() for s in skills if s.strip()]
+        else:
+            profile.ai_extracted_skills = []
+    
+    profile.save()
+    
+    # 触发完整AI分析
+    try:
+        from .resume_parser import extract_text_from_resume
+        from django.conf import settings
+        import os
+        
+        file_path = os.path.join(settings.MEDIA_ROOT, profile.resume.name)
+        resume_text = extract_text_from_resume(file_path)
+        
+        if resume_text:
+            # 生成完整AI报告（会使用用户确认的信息）
+            report = generate_ai_report(file_path, request.user)
+            
+            # 保存报告
+            profile.ai_report = report
+            profile.ai_report_updated_at = timezone.now()
+            profile.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': '确认成功，AI分析已完成',
+                'redirect_url': '/AIresult/'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': '无法提取简历文本内容'
+            })
+    except Exception as e:
+        logger.error(f"AI分析失败: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': f'AI分析失败: {str(e)}'
+        })
 
 def job_index_view(request):
     """职位列表页面视图（备选方案，如果 Wagtail 中没有 jobs 页面）"""

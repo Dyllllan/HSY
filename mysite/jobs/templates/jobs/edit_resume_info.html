@@ -1,0 +1,695 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}简历附件库 - 信息核对与修改{% endblock %}
+
+{% block body_class %}edit-resume-info-page{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<style>
+    body.edit-resume-info-page {
+        background: #F5F5F5;
+        padding-bottom: 20px;
+    }
+    
+    /* 页面头部 */
+    .page-header {
+        background: #ffffff;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #E0E0E0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
+    .page-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .back-btn {
+        color: #333333;
+        text-decoration: none;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        transition: opacity 0.2s;
+    }
+    
+    .back-btn:hover {
+        opacity: 0.7;
+    }
+    
+    .page-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333333;
+        margin: 0;
+    }
+    
+    .save-btn {
+        padding: 8px 20px;
+        background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+    }
+    
+    .save-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+    }
+    
+    .save-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* 当前活跃简历卡片 */
+    .active-resume-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        margin: 16px;
+        border: 2px solid #9C88FF;
+        box-shadow: 0 2px 8px rgba(156, 136, 255, 0.1);
+    }
+    
+    .active-resume-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .resume-status-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .resume-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.2) 0%, rgba(123, 104, 238, 0.2) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #9C88FF;
+    }
+    
+    .resume-status-text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .resume-status-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333333;
+    }
+    
+    .resume-status-date {
+        font-size: 12px;
+        color: #999999;
+    }
+    
+    .ai-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: #E6F7E6;
+        color: #52C41A;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .resume-info-preview {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: #F9F9F9;
+        border-radius: 12px;
+    }
+    
+    .info-preview-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .info-preview-label {
+        font-size: 12px;
+        color: #999999;
+    }
+    
+    .info-preview-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333333;
+    }
+    
+    .re-upload-btn {
+        width: 100%;
+        padding: 12px;
+        background: #1E3A5F;
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .re-upload-btn:hover {
+        background: #2A4A6F;
+    }
+    
+    /* 核心信息编辑区域 */
+    .edit-section {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        margin: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #333333;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F5F5F5;
+    }
+    
+    .section-title-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.1) 0%, rgba(123, 104, 238, 0.1) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9C88FF;
+        font-size: 16px;
+    }
+    
+    .form-group {
+        margin-bottom: 24px;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333333;
+        margin-bottom: 8px;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #E0E0E0;
+        border-radius: 12px;
+        font-size: 15px;
+        color: #333333;
+        background: #ffffff;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #9C88FF;
+        box-shadow: 0 0 0 3px rgba(156, 136, 255, 0.1);
+    }
+    
+    .form-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 12px 16px;
+        border: 1px solid #E0E0E0;
+        border-radius: 12px;
+        font-size: 15px;
+        color: #333333;
+        background: #ffffff;
+        resize: vertical;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-textarea:focus {
+        outline: none;
+        border-color: #9C88FF;
+        box-shadow: 0 0 0 3px rgba(156, 136, 255, 0.1);
+    }
+    
+    /* 技能标签 */
+    .skills-section {
+        margin-bottom: 24px;
+    }
+    
+    .skills-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333333;
+        margin-bottom: 12px;
+    }
+    
+    .skills-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .skill-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.1) 0%, rgba(123, 104, 238, 0.1) 100%);
+        color: #9C88FF;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border: 1px solid rgba(156, 136, 255, 0.2);
+    }
+    
+    .skill-tag-remove {
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    
+    .skill-tag-remove:hover {
+        opacity: 1;
+    }
+    
+    .add-skill-btn {
+        padding: 8px 16px;
+        background: #ffffff;
+        color: #9C88FF;
+        border: 1px dashed #9C88FF;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .add-skill-btn:hover {
+        background: rgba(156, 136, 255, 0.05);
+    }
+    
+    .add-skill-input {
+        display: none;
+        padding: 8px 14px;
+        border: 1px solid #9C88FF;
+        border-radius: 20px;
+        font-size: 14px;
+        width: 150px;
+    }
+    
+    .add-skill-input.show {
+        display: inline-block;
+    }
+    
+    /* 底部提示信息 */
+    .info-note {
+        background: #E6F4FF;
+        border-left: 4px solid #4A90E2;
+        padding: 16px;
+        margin: 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #666666;
+        line-height: 1.6;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .info-note-icon {
+        color: #4A90E2;
+        font-size: 18px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    
+    /* 确认按钮 */
+    .confirm-section {
+        padding: 16px;
+        margin-top: 24px;
+    }
+    
+    .confirm-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.3);
+    }
+    
+    .confirm-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(156, 136, 255, 0.4);
+    }
+    
+    .confirm-btn:active {
+        transform: translateY(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 页面头部 -->
+<div class="page-header">
+    <div class="page-header-left">
+        <a href="{% url 'account_profile' %}" class="back-btn">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="page-title">简历附件库</h1>
+    </div>
+    <button class="save-btn" onclick="saveInfo()">
+        <i class="bi bi-save"></i>
+        <span>保存修改</span>
+    </button>
+</div>
+
+<!-- 当前活跃简历 -->
+<div class="active-resume-card">
+    <div class="active-resume-header">
+        <div class="resume-status-left">
+            <div class="resume-icon">
+                <i class="bi bi-file-earmark-check"></i>
+            </div>
+            <div class="resume-status-text">
+                <div class="resume-status-title">当前活跃简历</div>
+                <div class="resume-status-date">
+                    最后更新: {{ profile.ai_extraction_updated_at|date:"Y/m/d"|default:"未更新" }}
+                </div>
+            </div>
+        </div>
+        {% if profile.ai_extraction_completed %}
+        <div class="ai-status-badge">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>AI 解析完成</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if profile.ai_extracted_school or profile.ai_extracted_major %}
+    <div class="resume-info-preview">
+        {% if profile.ai_extracted_school %}
+        <div class="info-preview-item">
+            <div class="info-preview-label">目标校招</div>
+            <div class="info-preview-value">{{ profile.ai_extracted_school }}</div>
+        </div>
+        {% endif %}
+        {% if profile.ai_extracted_major %}
+        <div class="info-preview-item">
+            <div class="info-preview-label">专业方向</div>
+            <div class="info-preview-value">{{ profile.ai_extracted_major }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <button class="re-upload-btn" onclick="reuploadResume()">
+        <i class="bi bi-arrow-clockwise"></i>
+        <span>重新上传简历更新画像</span>
+    </button>
+</div>
+
+<!-- 核心信息核对与修改 -->
+<div class="edit-section">
+    <div class="section-title">
+        <div class="section-title-icon">
+            <i class="bi bi-pencil"></i>
+        </div>
+        <span>核心信息核对与修改</span>
+    </div>
+    
+    <form id="resume-info-form">
+        <!-- 院校和专业 -->
+        <div class="form-group">
+            <label class="form-label">院校</label>
+            <input type="text" 
+                   class="form-input" 
+                   name="school" 
+                   id="school"
+                   value="{{ profile.ai_extracted_school|default:'' }}"
+                   placeholder="请输入学校名称">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">专业</label>
+            <input type="text" 
+                   class="form-input" 
+                   name="major" 
+                   id="major"
+                   value="{{ profile.ai_extracted_major|default:'' }}"
+                   placeholder="请输入专业名称">
+        </div>
+        
+        <!-- 核心能力库 -->
+        <div class="form-group skills-section">
+            <label class="form-label">核心能力库 (AI提取)</label>
+            <div class="skills-tags" id="skills-container">
+                {% for skill in profile.ai_extracted_skills %}
+                <span class="skill-tag">
+                    {{ skill }}
+                    <span class="skill-tag-remove" onclick="removeSkill(this)">×</span>
+                </span>
+                {% endfor %}
+            </div>
+            <button type="button" class="add-skill-btn" onclick="showAddSkillInput()">
+                + 补充技能
+            </button>
+            <input type="text" 
+                   class="add-skill-input" 
+                   id="add-skill-input"
+                   placeholder="输入技能名称"
+                   onkeypress="handleSkillInput(event)">
+        </div>
+        
+        <!-- 经历描述 -->
+        <div class="form-group">
+            <label class="form-label">经历描述</label>
+            <textarea class="form-textarea" 
+                      name="internship_summary" 
+                      id="internship_summary"
+                      placeholder="请输入实习经历总结">{{ profile.ai_extracted_internship_summary|default:'' }}</textarea>
+        </div>
+        
+        <!-- 职业兴趣与偏好 -->
+        <div class="form-group">
+            <label class="form-label">职业兴趣与偏好</label>
+            <textarea class="form-textarea" 
+                      name="hobbies" 
+                      id="hobbies"
+                      placeholder="请输入职业兴趣和偏好">{{ profile.ai_extracted_hobbies|default:'' }}</textarea>
+        </div>
+    </form>
+    
+    <!-- 确认按钮 -->
+    <div class="confirm-section">
+        <button class="confirm-btn" onclick="confirmAndAnalyze()">
+            <i class="bi bi-check-circle"></i>
+            <span>确认信息并开始AI综合分析</span>
+        </button>
+    </div>
+</div>
+
+<!-- 底部提示信息 -->
+<div class="info-note">
+    <i class="bi bi-info-circle info-note-icon"></i>
+    <div>
+        以上信息通过简历文本由AI自动推导，你可以随时手动修正。我们将基于这些信息为你实时计算岗位匹配度。
+    </div>
+</div>
+
+<script>
+    // 保存信息（不触发完整分析）
+    function saveInfo() {
+        const formData = {
+            school: document.getElementById('school').value.trim(),
+            major: document.getElementById('major').value.trim(),
+            internship_summary: document.getElementById('internship_summary').value.trim(),
+            hobbies: document.getElementById('hobbies').value.trim(),
+            skills: Array.from(document.querySelectorAll('.skill-tag')).map(tag => {
+                const removeBtn = tag.querySelector('.skill-tag-remove');
+                return removeBtn ? tag.textContent.replace('×', '').trim() : tag.textContent.trim();
+            })
+        };
+        
+        fetch('/api/save-resume-info/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('保存成功！');
+            } else {
+                alert('保存失败：' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('保存失败，请重试');
+        });
+    }
+    
+    // 确认信息并开始AI综合分析
+    function confirmAndAnalyze() {
+        const formData = {
+            school: document.getElementById('school').value.trim(),
+            major: document.getElementById('major').value.trim(),
+            internship_summary: document.getElementById('internship_summary').value.trim(),
+            hobbies: document.getElementById('hobbies').value.trim(),
+            skills: Array.from(document.querySelectorAll('.skill-tag')).map(tag => {
+                const removeBtn = tag.querySelector('.skill-tag-remove');
+                return removeBtn ? tag.textContent.replace('×', '').trim() : tag.textContent.trim();
+            })
+        };
+        
+        // 显示加载提示
+        const confirmBtn = document.querySelector('.confirm-btn');
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> <span>AI分析中，请稍候...</span>';
+        
+        fetch('/api/confirm-resume-info/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert('确认成功！');
+                }
+            } else {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+                alert('分析失败：' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
+            alert('分析失败，请重试');
+        });
+    }
+    
+    // 显示添加技能输入框
+    function showAddSkillInput() {
+        const input = document.getElementById('add-skill-input');
+        const btn = document.querySelector('.add-skill-btn');
+        input.classList.add('show');
+        input.focus();
+        btn.style.display = 'none';
+    }
+    
+    // 处理技能输入
+    function handleSkillInput(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const input = document.getElementById('add-skill-input');
+            const skill = input.value.trim();
+            if (skill) {
+                addSkill(skill);
+                input.value = '';
+                input.classList.remove('show');
+                document.querySelector('.add-skill-btn').style.display = 'inline-block';
+            }
+        }
+    }
+    
+    // 添加技能标签
+    function addSkill(skill) {
+        const container = document.getElementById('skills-container');
+        const tag = document.createElement('span');
+        tag.className = 'skill-tag';
+        tag.innerHTML = skill + ' <span class="skill-tag-remove" onclick="removeSkill(this)">×</span>';
+        container.appendChild(tag);
+    }
+    
+    // 移除技能标签
+    function removeSkill(element) {
+        element.parentElement.remove();
+    }
+    
+    // 重新上传简历
+    function reuploadResume() {
+        window.location.href = '/recommendations/';
+    }
+    
+    // 获取CSRF Token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

@@ -33,6 +33,10 @@ urlpatterns = [
     path("jobs/", jobs_views.job_index_view, name="job_index"),
     path("api/upload-resume/", jobs_views.upload_resume_api, name="upload_resume_api"),
     path("api/analyze-resume/", jobs_views.analyze_resume_api, name="analyze_resume_api"),
+    # 简历信息编辑
+    path("resume/edit/", jobs_views.edit_resume_info, name="edit_resume_info"),
+    path("api/save-resume-info/", jobs_views.save_resume_info_api, name="save_resume_info_api"),
+    path("api/confirm-resume-info/", jobs_views.confirm_resume_info_api, name="confirm_resume_info_api"),
     # 收藏职位API
     path("api/toggle-save-job/", jobs_api.toggle_save_job, name="toggle_save_job"),
 ]

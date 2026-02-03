@@ -232,11 +232,30 @@ class AIService:
     
     def _build_prompt(self, resume_text: str, user_info: Optional[Dict] = None) -> str:
         """构建AI提示词"""
+        # 构建用户确认信息的说明
+        confirmed_info = ""
+        if user_info:
+            confirmed_parts = []
+            if user_info.get('confirmed_school'):
+                confirmed_parts.append(f"学校：{user_info['confirmed_school']}")
+            if user_info.get('confirmed_major'):
+                confirmed_parts.append(f"专业：{user_info['confirmed_major']}")
+            if user_info.get('confirmed_internship'):
+                confirmed_parts.append(f"实习经历：{user_info['confirmed_internship']}")
+            if user_info.get('confirmed_hobbies'):
+                confirmed_parts.append(f"职业兴趣：{user_info['confirmed_hobbies']}")
+            if user_info.get('confirmed_skills'):
+                skills_str = ', '.join(user_info['confirmed_skills']) if isinstance(user_info['confirmed_skills'], list) else str(user_info['confirmed_skills'])
+                confirmed_parts.append(f"核心技能：{skills_str}")
+            
+            if confirmed_parts:
+                confirmed_info = "\n\n用户确认的关键信息（请重点参考）：\n" + "\n".join(confirmed_parts) + "\n"
+        
         prompt = f"""请分析以下简历内容，生成一份详细的职场竞争力分析报告。
 
 简历内容：
 {resume_text[:3000]}  # 限制长度避免超出token限制
-
+{confirmed_info}
 请按照以下格式生成报告：
 
 【AI职场竞争力报告】
@@ -263,10 +282,7 @@ class AIService:
 📈 竞争力排名
 评估在同类求职者中的竞争力排名（如前20%、前30%等）。
 
-请确保报告内容专业、客观、有建设性。"""
-        
-        if user_info:
-            prompt += f"\n\n用户信息：{json.dumps(user_info, ensure_ascii=False)}"
+请确保报告内容专业、客观、有建设性。在分析时，请优先参考用户确认的关键信息（学校、专业、实习经历、职业兴趣、核心技能），这些信息已经过用户核实，准确性更高。"""
         
         return prompt
     

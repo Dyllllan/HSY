@@ -446,9 +446,8 @@
 
 <!-- 功能列表 -->
 <div class="features-section">
-    <a href="{% if profile.resume %}{{ profile.resume.url }}{% else %}/recommendations/{% endif %}" 
-       class="feature-item" 
-       {% if profile.resume %}target="_blank"{% endif %}>
+    <a href="{% url 'edit_resume_info' %}" 
+       class="feature-item">
         <div class="feature-icon blue">
             <i class="bi bi-file-earmark-pdf"></i>
         </div>

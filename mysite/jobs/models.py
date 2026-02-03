@@ -585,6 +585,53 @@ class StudentProfile(models.Model):
         help_text='用于搜索匹配的简历文本'
     )
     
+    # AI初步提取的信息（用户可编辑）
+    ai_extracted_school = models.CharField(
+        'AI提取的学校',
+        max_length=200,
+        blank=True,
+        help_text='AI从简历中提取的学校名称'
+    )
+    
+    ai_extracted_major = models.CharField(
+        'AI提取的专业',
+        max_length=200,
+        blank=True,
+        help_text='AI从简历中提取的专业名称'
+    )
+    
+    ai_extracted_internship_summary = models.TextField(
+        'AI提取的实习经历总结',
+        blank=True,
+        help_text='AI从简历中总结的实习经历'
+    )
+    
+    ai_extracted_hobbies = models.TextField(
+        'AI提取的爱好/职业兴趣',
+        blank=True,
+        help_text='AI从简历中提取的爱好和职业兴趣'
+    )
+    
+    ai_extracted_skills = models.JSONField(
+        'AI提取的核心技能',
+        default=list,
+        blank=True,
+        help_text='AI从简历中提取的核心技能列表'
+    )
+    
+    ai_extraction_completed = models.BooleanField(
+        'AI初步提取完成',
+        default=False,
+        help_text='AI是否已完成初步信息提取'
+    )
+    
+    ai_extraction_updated_at = models.DateTimeField(
+        'AI提取更新时间',
+        null=True,
+        blank=True,
+        help_text='AI初步信息提取的最后更新时间'
+    )
+    
     # AI分析结果
     ai_report = models.TextField(
         'AI分析报告',

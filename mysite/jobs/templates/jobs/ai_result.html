@@ -8,6 +8,8 @@
 {% block extra_css %}
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
     body.ai-result-page {
         background: #F5F5F5;
@@ -251,6 +253,141 @@
         border-radius: 20px;
         font-weight: 600;
         font-size: 14px;
+    }
+    
+    /* 结构化字段展示 */
+    .structured-fields {
+        margin-bottom: 24px;
+    }
+    
+    .field-group {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .field-group-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333333;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F5F5F5;
+    }
+    
+    .field-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid #F5F5F5;
+    }
+    
+    .field-item:last-child {
+        border-bottom: none;
+    }
+    
+    .field-label {
+        font-weight: 600;
+        color: #666666;
+        min-width: 100px;
+        flex-shrink: 0;
+    }
+    
+    .field-value {
+        color: #333333;
+        flex: 1;
+    }
+    
+    .field-value ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .field-value li {
+        margin-bottom: 8px;
+    }
+    
+    /* 技能评分柱状图容器 */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin: 20px 0;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.03) 0%, rgba(79, 172, 254, 0.03) 100%);
+        border-radius: 12px;
+    }
+    
+    /* 岗位推荐卡片 */
+    .job-recommendation-card {
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.05) 0%, rgba(79, 172, 254, 0.05) 100%);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border-left: 4px solid #9C88FF;
+        transition: all 0.3s ease;
+    }
+    
+    .job-recommendation-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.15);
+    }
+    
+    .job-recommendation-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333333;
+        margin-bottom: 8px;
+    }
+    
+    .job-recommendation-reason {
+        font-size: 14px;
+        color: #666666;
+        line-height: 1.6;
+    }
+    
+    /* 建议列表 */
+    .suggestion-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .suggestion-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid #F5F5F5;
+    }
+    
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+    
+    .suggestion-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    
+    .suggestion-text {
+        flex: 1;
+        color: #333333;
+        line-height: 1.6;
     }
     
     .report-list {
@@ -554,7 +691,158 @@
 </div>
 
 {% if has_report %}
-<!-- 报告内容 -->
+<!-- 结构化字段展示 -->
+{% if parsed_report %}
+<div class="structured-fields">
+    <!-- 基本信息 -->
+    {% if parsed_report.basic_info %}
+    <div class="field-group">
+        <div class="field-group-title">
+            <i class="bi bi-info-circle" style="color: #9C88FF;"></i>
+            <span>基本信息</span>
+        </div>
+        {% if parsed_report.basic_info.education %}
+        <div class="field-item">
+            <span class="field-label">教育背景</span>
+            <span class="field-value">{{ parsed_report.basic_info.education }}</span>
+        </div>
+        {% endif %}
+        {% if parsed_report.basic_info.work_experience %}
+        <div class="field-item">
+            <span class="field-label">工作经验</span>
+            <span class="field-value">{{ parsed_report.basic_info.work_experience }}</span>
+        </div>
+        {% endif %}
+        {% if parsed_report.basic_info.core_skills %}
+        <div class="field-item">
+            <span class="field-label">核心技能</span>
+            <span class="field-value">
+                <ul>
+                    {% for skill in parsed_report.basic_info.core_skills %}
+                    <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+            </span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- 技能匹配度评分（带柱状图） -->
+    {% if parsed_report.skill_scores %}
+    <div class="field-group">
+        <div class="field-group-title">
+            <i class="bi bi-bar-chart-line" style="color: #4A90E2;"></i>
+            <span>技能匹配度评估</span>
+        </div>
+        
+        <!-- 柱状图 -->
+        {% if parsed_report.skill_scores.technical_skill > 0 or parsed_report.skill_scores.soft_skill > 0 or parsed_report.skill_scores.overall_match > 0 %}
+        <div class="chart-container">
+            <canvas id="skillChart"></canvas>
+        </div>
+        {% endif %}
+        
+        <!-- 评分详情 -->
+        <div class="field-item">
+            <span class="field-label">技术技能</span>
+            <span class="field-value">
+                <span class="report-score">{{ parsed_report.skill_scores.technical_skill }}分</span>
+            </span>
+        </div>
+        <div class="field-item">
+            <span class="field-label">软技能</span>
+            <span class="field-value">
+                <span class="report-score">{{ parsed_report.skill_scores.soft_skill }}分</span>
+            </span>
+        </div>
+        <div class="field-item">
+            <span class="field-label">综合匹配度</span>
+            <span class="field-value">
+                <span class="report-score">{{ parsed_report.skill_scores.overall_match }}分</span>
+            </span>
+        </div>
+        
+        <!-- 技能优势 -->
+        {% if parsed_report.skill_advantages %}
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #F5F5F5;">
+            <div style="font-weight: 600; color: #52C41A; margin-bottom: 12px;">技能优势</div>
+            <ul style="margin: 0; padding-left: 20px; color: #333333;">
+                {% for advantage in parsed_report.skill_advantages %}
+                <li>{{ advantage }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <!-- 技能短板 -->
+        {% if parsed_report.skill_weaknesses %}
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #F5F5F5;">
+            <div style="font-weight: 600; color: #FF6B35; margin-bottom: 12px;">技能短板</div>
+            <ul style="margin: 0; padding-left: 20px; color: #333333;">
+                {% for weakness in parsed_report.skill_weaknesses %}
+                <li>{{ weakness }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- 岗位推荐 -->
+    {% if parsed_report.job_recommendations %}
+    <div class="field-group">
+        <div class="field-group-title">
+            <i class="bi bi-briefcase" style="color: #52C41A;"></i>
+            <span>岗位推荐</span>
+        </div>
+        {% for job in parsed_report.job_recommendations %}
+        <div class="job-recommendation-card">
+            <div class="job-recommendation-name">{{ job.name }}</div>
+            {% if job.reason %}
+            <div class="job-recommendation-reason">{{ job.reason }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- 提升建议 -->
+    {% if parsed_report.improvement_suggestions %}
+    <div class="field-group">
+        <div class="field-group-title">
+            <i class="bi bi-lightbulb" style="color: #FF6B35;"></i>
+            <span>提升建议</span>
+        </div>
+        <ul class="suggestion-list">
+            {% for suggestion in parsed_report.improvement_suggestions %}
+            <li class="suggestion-item">
+                <div class="suggestion-number">{{ forloop.counter }}</div>
+                <div class="suggestion-text">{{ suggestion }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <!-- 竞争力排名 -->
+    {% if parsed_report.competitiveness_rank %}
+    <div class="field-group">
+        <div class="field-group-title">
+            <i class="bi bi-trophy" style="color: #FFD93D;"></i>
+            <span>竞争力排名</span>
+        </div>
+        <div class="field-item">
+            <span class="field-value">
+                <span class="report-highlight">{{ parsed_report.competitiveness_rank }}</span>
+            </span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- 原始报告内容（完整文本） -->
 <div class="report-card">
     <div class="report-meta">
         <div class="report-date">
@@ -611,8 +899,104 @@
 </nav>
 
 <script>
-    // 美化报告内容，添加图案元素
+    // 初始化技能匹配度柱状图
     document.addEventListener('DOMContentLoaded', function() {
+        {% if parsed_report_json %}
+        const parsedReport = {{ parsed_report_json|safe }};
+        const skillScores = parsedReport && parsedReport.skill_scores;
+        if (skillScores && (skillScores.technical_skill > 0 || skillScores.soft_skill > 0 || skillScores.overall_match > 0)) {
+            const ctx = document.getElementById('skillChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['技术技能', '软技能', '综合匹配度'],
+                        datasets: [{
+                            label: '评分',
+                            data: [
+                                skillScores.technical_skill || 0,
+                                skillScores.soft_skill || 0,
+                                skillScores.overall_match || 0
+                            ],
+                            backgroundColor: [
+                                'rgba(156, 136, 255, 0.8)',
+                                'rgba(74, 144, 226, 0.8)',
+                                'rgba(82, 196, 26, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(156, 136, 255, 1)',
+                                'rgba(74, 144, 226, 1)',
+                                'rgba(82, 196, 26, 1)'
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            borderSkipped: false,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                bodyFont: {
+                                    size: 13
+                                },
+                                callbacks: {
+                                    label: function(context) {
+                                        return '评分: ' + context.parsed.y + '分';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    stepSize: 20,
+                                    font: {
+                                        size: 12
+                                    },
+                                    callback: function(value) {
+                                        return value + '分';
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 13,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1500,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+            }
+        }
+        {% endif %}
+        
+        // 美化报告内容，添加图案元素
         const reportContent = document.getElementById('report-content');
         if (!reportContent) return;
         
