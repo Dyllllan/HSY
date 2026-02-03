@@ -29,8 +29,8 @@ class ReportParser:
             # 提取基本信息
             self.parsed_data['basic_info'] = self._parse_basic_info()
             
-            # 提取技能匹配度评分
-            self.parsed_data['skill_scores'] = self._parse_skill_scores()
+            # 提取核心竞争力指标评分
+            self.parsed_data['competency_scores'] = self._parse_competency_scores()
             
             # 提取岗位推荐
             self.parsed_data['job_recommendations'] = self._parse_job_recommendations()
@@ -89,43 +89,150 @@ class ReportParser:
         
         return info
     
-    def _parse_skill_scores(self) -> Dict:
-        """解析技能匹配度评分"""
+    def _parse_competency_scores(self) -> Dict:
+        """解析核心竞争力指标评分"""
         scores = {
-            'technical_skill': 0,
-            'soft_skill': 0,
-            'overall_match': 0
+            'professional_depth': 0,        # 专业深度
+            'learning_acuity': 0,           # 学习敏锐度
+            'logical_architecture': 0,      # 逻辑架构能力
+            'resilience': 0                 # 抗压韧性
         }
         
-        # 查找技能匹配度部分
-        skill_section = self._extract_section('技能匹配度', '💼')
+        # 首先尝试查找新格式：核心竞争力指标
+        competency_section = self._extract_section('核心竞争力指标', '💼')
         
-        if skill_section:
-            # 提取技术技能评分
-            tech_match = re.search(r'技术技能[：:]\s*(\d+)', skill_section)
-            if tech_match:
-                scores['technical_skill'] = int(tech_match.group(1))
+        if competency_section:
+            # 提取专业深度评分（支持多种格式：95分、95、专业深度：95等）
+            depth_patterns = [
+                r'专业深度[：:]\s*(\d+)',
+                r'专业深度[：:]\s*(\d+)\s*分',
+                r'专业深度[：:]\s*(\d+)\s*%',
+                r'[Pp]rofessional\s*[Dd]epth[：:]\s*(\d+)',
+            ]
+            for pattern in depth_patterns:
+                depth_match = re.search(pattern, competency_section)
+                if depth_match:
+                    scores['professional_depth'] = int(depth_match.group(1))
+                    break
             
-            # 提取软技能评分
-            soft_match = re.search(r'软技能[：:]\s*(\d+)', skill_section)
-            if soft_match:
-                scores['soft_skill'] = int(soft_match.group(1))
+            # 提取学习敏锐度评分
+            learning_patterns = [
+                r'学习敏锐度[：:]\s*(\d+)',
+                r'学习敏锐度[：:]\s*(\d+)\s*分',
+                r'学习敏锐度[：:]\s*(\d+)\s*%',
+                r'[Ll]earning\s*[Aa]cuity[：:]\s*(\d+)',
+            ]
+            for pattern in learning_patterns:
+                learning_match = re.search(pattern, competency_section)
+                if learning_match:
+                    scores['learning_acuity'] = int(learning_match.group(1))
+                    break
             
-            # 提取综合匹配度评分
-            overall_match = re.search(r'综合匹配度[：:]\s*(\d+)', skill_section)
-            if overall_match:
-                scores['overall_match'] = int(overall_match.group(1))
+            # 提取逻辑架构能力评分
+            logical_patterns = [
+                r'逻辑架构能力[：:]\s*(\d+)',
+                r'逻辑架构能力[：:]\s*(\d+)\s*分',
+                r'逻辑架构能力[：:]\s*(\d+)\s*%',
+                r'[Ll]ogical\s*[Aa]rchitecture[：:]\s*(\d+)',
+            ]
+            for pattern in logical_patterns:
+                logical_match = re.search(pattern, competency_section)
+                if logical_match:
+                    scores['logical_architecture'] = int(logical_match.group(1))
+                    break
             
-            # 如果没有找到，尝试其他格式
-            if scores['technical_skill'] == 0:
-                tech_match = re.search(r'技术[：:]\s*(\d+)', skill_section)
-                if tech_match:
-                    scores['technical_skill'] = int(tech_match.group(1))
+            # 提取抗压韧性评分
+            resilience_patterns = [
+                r'抗压韧性[：:]\s*(\d+)',
+                r'抗压韧性[：:]\s*(\d+)\s*分',
+                r'抗压韧性[：:]\s*(\d+)\s*%',
+                r'[Rr]esilience[：:]\s*(\d+)',
+            ]
+            for pattern in resilience_patterns:
+                resilience_match = re.search(pattern, competency_section)
+                if resilience_match:
+                    scores['resilience'] = int(resilience_match.group(1))
+                    break
+        
+        # 如果新格式没有找到数据，尝试兼容旧格式：技能匹配度评估
+        if scores['professional_depth'] == 0 and scores['learning_acuity'] == 0 and \
+           scores['logical_architecture'] == 0 and scores['resilience'] == 0:
+            skill_section = self._extract_section('技能匹配度', '💼')
+            if not skill_section:
+                skill_section = self.report_text
             
-            if scores['soft_skill'] == 0:
-                soft_match = re.search(r'软技能|沟通|协作[：:]\s*(\d+)', skill_section)
-                if soft_match:
-                    scores['soft_skill'] = int(soft_match.group(1))
+            # 从旧格式中提取技术技能、软技能、综合匹配度
+            tech_match = re.search(r'技术技能[评分]*[：:]\s*(\d+)', skill_section)
+            soft_match = re.search(r'软技能[评分]*[：:]\s*(\d+)', skill_section)
+            overall_match = re.search(r'综合匹配度[评分]*[：:]\s*(\d+)', skill_section)
+            
+            tech_score = int(tech_match.group(1)) if tech_match else 0
+            soft_score = int(soft_match.group(1)) if soft_match else 0
+            overall_score = int(overall_match.group(1)) if overall_match else 0
+            
+            # 将旧格式映射到新格式
+            if tech_score > 0 or soft_score > 0 or overall_score > 0:
+                # 技术技能 -> 专业深度
+                scores['professional_depth'] = tech_score
+                # 软技能 -> 学习敏锐度
+                scores['learning_acuity'] = soft_score
+                # 综合匹配度 -> 逻辑架构能力
+                scores['logical_architecture'] = overall_score
+                # 抗压韧性：如果综合匹配度较高，可以设置为综合匹配度的90%
+                scores['resilience'] = int(overall_score * 0.9) if overall_score > 0 else 0
+        
+        # 如果仍然没有找到，尝试在整个报告中搜索（支持更多格式变体）
+        if scores['professional_depth'] == 0:
+            depth_patterns = [
+                r'专业深度[：:]\s*(\d+)',
+                r'专业深度[：:]\s*(\d+)\s*分',
+                r'专业深度[：:]\s*(\d+)\s*%',
+                r'[Pp]rofessional\s*[Dd]epth[：:]\s*(\d+)',
+            ]
+            for pattern in depth_patterns:
+                depth_match = re.search(pattern, self.report_text)
+                if depth_match:
+                    scores['professional_depth'] = int(depth_match.group(1))
+                    break
+        
+        if scores['learning_acuity'] == 0:
+            learning_patterns = [
+                r'学习敏锐度[：:]\s*(\d+)',
+                r'学习敏锐度[：:]\s*(\d+)\s*分',
+                r'学习敏锐度[：:]\s*(\d+)\s*%',
+                r'[Ll]earning\s*[Aa]cuity[：:]\s*(\d+)',
+            ]
+            for pattern in learning_patterns:
+                learning_match = re.search(pattern, self.report_text)
+                if learning_match:
+                    scores['learning_acuity'] = int(learning_match.group(1))
+                    break
+        
+        if scores['logical_architecture'] == 0:
+            logical_patterns = [
+                r'逻辑架构能力[：:]\s*(\d+)',
+                r'逻辑架构能力[：:]\s*(\d+)\s*分',
+                r'逻辑架构能力[：:]\s*(\d+)\s*%',
+                r'[Ll]ogical\s*[Aa]rchitecture[：:]\s*(\d+)',
+            ]
+            for pattern in logical_patterns:
+                logical_match = re.search(pattern, self.report_text)
+                if logical_match:
+                    scores['logical_architecture'] = int(logical_match.group(1))
+                    break
+        
+        if scores['resilience'] == 0:
+            resilience_patterns = [
+                r'抗压韧性[：:]\s*(\d+)',
+                r'抗压韧性[：:]\s*(\d+)\s*分',
+                r'抗压韧性[：:]\s*(\d+)\s*%',
+                r'[Rr]esilience[：:]\s*(\d+)',
+            ]
+            for pattern in resilience_patterns:
+                resilience_match = re.search(pattern, self.report_text)
+                if resilience_match:
+                    scores['resilience'] = int(resilience_match.group(1))
+                    break
         
         return scores
     
@@ -262,10 +369,11 @@ class ReportParser:
                 'core_skills': [],
                 'contact_info': ''
             },
-            'skill_scores': {
-                'technical_skill': 0,
-                'soft_skill': 0,
-                'overall_match': 0
+            'competency_scores': {
+                'professional_depth': 0,
+                'learning_acuity': 0,
+                'logical_architecture': 0,
+                'resilience': 0
             },
             'job_recommendations': [],
             'improvement_suggestions': [],

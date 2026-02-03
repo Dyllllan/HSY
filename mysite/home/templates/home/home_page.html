@@ -953,6 +953,13 @@
     <a href="/{% if search_query %}?q={{ search_query }}{% endif %}" class="category-btn {% if not current_category %}active{% endif %}" data-category="">
         <span>全部</span>
     </a>
+    {% if has_ai_report %}
+    <a href="/?category=推荐{% if search_query %}&q={{ search_query }}{% endif %}" class="category-btn {% if current_category == '推荐' %}active{% endif %}" data-category="推荐" style="{% if not category_counts.推荐 or category_counts.推荐 == 0 %}opacity: 0.7;{% endif %}">
+        <i class="bi bi-star-fill"></i>
+        <span>推荐</span>
+        {% if category_counts.推荐 and category_counts.推荐 > 0 %}<span class="category-count">{{ category_counts.推荐 }}</span>{% endif %}
+    </a>
+    {% endif %}
     <a href="/?category=互联网{% if search_query %}&q={{ search_query }}{% endif %}" class="category-btn {% if current_category == '互联网' %}active{% endif %}" data-category="互联网">
         <i class="bi bi-laptop"></i>
         <span>互联网</span>

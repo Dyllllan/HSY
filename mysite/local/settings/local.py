@@ -55,7 +55,31 @@
 # This file intentionally left mostly empty
 # Override settings here as needed for your local environment
 import os
+
+# ============================================
+# AI API配置 - 香港可用服务
+# ============================================
+
+# 方案1: DeepSeek（推荐，香港可用，性价比高）
 os.environ['AI_PROVIDER'] = 'deepseek'
-os.environ['AI_API_KEY'] = 'sk-apikey'
+os.environ['AI_API_KEY'] = 'sk-apikeys'
 os.environ['AI_MODEL'] = 'deepseek-chat'
-pass
+os.environ['AI_API_BASE'] = 'https://api.deepseek.com/v1'  # DeepSeek API端点
+
+# 方案2: 通义千问（阿里云，香港可用，备选方案）
+# 如需使用通义千问，取消下面的注释并注释掉上面的DeepSeek配置
+# os.environ['AI_PROVIDER'] = 'qwen'
+# os.environ['AI_API_KEY'] = 'your-qwen-api-key-here'
+# os.environ['AI_MODEL'] = 'qwen-turbo'
+# os.environ['AI_API_BASE'] = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+
+# ============================================
+# 配置说明：
+# 1. DeepSeek: 香港可用，价格便宜，性能优秀
+#    获取API Key: https://platform.deepseek.com/api_keys
+#    支持模型: deepseek-chat（通用）, deepseek-coder（代码专用）
+#
+# 2. 通义千问: 阿里云服务，香港可用，中文理解能力强
+#    获取API Key: https://dashscope.console.aliyun.com/
+#    支持模型: qwen-turbo, qwen-plus, qwen-max
+# ============================================

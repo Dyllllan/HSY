@@ -67,7 +67,11 @@ def _extract_from_docx(file_path: str) -> str:
     """从DOCX文件提取文本"""
     try:
         from docx import Document
-        
+    except ImportError:
+        logger.error("python-docx库未安装，请运行: pip install python-docx")
+        return ""
+    
+    try:
         doc = Document(file_path)
         text_parts = []
         
@@ -87,9 +91,6 @@ def _extract_from_docx(file_path: str) -> str:
                     text_parts.append(" | ".join(row_text))
         
         return "\n".join(text_parts)
-    except ImportError:
-        logger.error("python-docx库未安装，请运行: pip install python-docx")
-        return ""
     except Exception as e:
-        logger.error(f"DOCX解析失败: {str(e)}")
+        logger.error(f"DOCX解析失败: {str(e)}", exc_info=True)
         return ""

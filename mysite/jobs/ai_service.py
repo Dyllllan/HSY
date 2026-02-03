@@ -56,7 +56,7 @@ class AIService:
     def _call_openai_api(self, resume_text: str, user_info: Optional[Dict] = None) -> str:
         """调用OpenAI API"""
         try:
-            import openai
+            import openai  # type: ignore[import-untyped]
             
             # 如果没有设置api_base，使用默认的OpenAI端点
             client = openai.OpenAI(
@@ -84,7 +84,7 @@ class AIService:
     def _call_qwen_api(self, resume_text: str, user_info: Optional[Dict] = None) -> str:
         """调用通义千问API（阿里云）"""
         try:
-            import openai
+            import openai  # type: ignore[import-untyped]
             
             # 通义千问使用OpenAI兼容的接口
             client = openai.OpenAI(
@@ -202,7 +202,7 @@ class AIService:
     def _call_deepseek_api(self, resume_text: str, user_info: Optional[Dict] = None) -> str:
         """调用DeepSeek API"""
         try:
-            import openai
+            import openai  # type: ignore[import-untyped]
             
             # DeepSeek使用OpenAI兼容的接口
             client = openai.OpenAI(
@@ -266,12 +266,39 @@ class AIService:
 - 工作经验年限
 - 核心技能
 
-💼 技能匹配度评估
-- 技术技能评分（0-100分）
-- 软技能评分（0-100分）
-- 综合匹配度评分（0-100分）
-- 技能优势分析
-- 技能短板分析
+💼 核心竞争力指标评估
+【重要提示】此部分必须包含4个竞争力指标的量化评分，每个指标必须给出0-100之间的具体整数分数。评分格式必须严格按照以下要求：
+
+【必须输出的格式】（请复制此格式并填写数字）：
+专业深度：[数字]分
+学习敏锐度：[数字]分
+逻辑架构能力：[数字]分
+抗压韧性：[数字]分
+
+【评分标准】：
+1. 专业深度：评估候选人在专业领域的知识深度、技术专精程度和专业能力水平。
+   - 根据简历中的技术栈深度、项目复杂度、教育背景、专业认证等综合评估
+   - 评分范围：0-100分（0-40初级，41-70中级，71-85高级，86-100专家级）
+
+2. 学习敏锐度：评估候选人的学习能力、适应新环境的速度、持续学习意愿和能力提升潜力。
+   - 根据学习经历、新技能掌握速度、自我提升记录、跨领域学习能力等评估
+   - 评分范围：0-100分（0-40较慢，41-70一般，71-85较快，86-100极快）
+
+3. 逻辑架构能力：评估候选人的逻辑思维能力、问题分析能力、系统架构设计和解决方案设计能力。
+   - 根据项目复杂度、问题解决能力、系统设计经验、架构思维等评估
+   - 评分范围：0-100分（0-40基础，41-70良好，71-85优秀，86-100卓越）
+
+4. 抗压韧性：评估候选人在压力环境下的工作能力、抗挫折能力、心理韧性和稳定性。
+   - 根据工作强度、项目压力、困难克服经历、持续工作能力等评估
+   - 评分范围：0-100分（0-40较弱，41-70一般，71-85较强，86-100极强）
+
+【输出示例】（请严格按照此格式，必须包含4个数字）：
+专业深度：85分
+学习敏锐度：78分
+逻辑架构能力：82分
+抗压韧性：75分
+
+评分后，请为每个指标提供1-2句话的简要分析说明，解释评分理由。
 
 🎯 岗位推荐
 基于简历内容，推荐3-5个适合的岗位类型，并说明推荐理由。
@@ -298,10 +325,11 @@ class AIService:
 分析时间: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
 简历长度: {len(resume_text)} 字符
 
-💼 技能匹配度
-技术技能: 待评估（需要AI服务支持）
-软技能: 待评估（需要AI服务支持）
-综合匹配度: 待评估（需要AI服务支持）
+💼 核心竞争力指标评估
+专业深度: 待评估（需要AI服务支持）
+学习敏锐度: 待评估（需要AI服务支持）
+逻辑架构能力: 待评估（需要AI服务支持）
+抗压韧性: 待评估（需要AI服务支持）
 
 🎯 岗位推荐
 基于您的简历内容，我们为您推荐以下类型的岗位：

@@ -125,7 +125,21 @@ def profile_page(request):
     user = request.user
     
     # 获取或创建学生档案
-    profile, created = StudentProfile.objects.get_or_create(user=user)
+    # 注意：如果数据库迁移未运行，这里可能会报错
+    # 请运行: python manage.py migrate
+    try:
+        profile, created = StudentProfile.objects.get_or_create(user=user)
+    except Exception as e:
+        # 如果字段不存在，提示用户运行迁移
+        if 'ai_extracted_school' in str(e) or 'Unknown column' in str(e):
+            messages.error(request, '数据库需要更新，请运行: python manage.py migrate')
+            logger.error(f"数据库迁移未运行: {str(e)}")
+            return render(request, 'jobs/account/profile.html', {
+                'error': '数据库需要更新',
+                'migration_needed': True,
+                'user': user,
+            })
+        raise
     
     # 获取用户的职位申请记录
     user_applications = JobApplication.objects.filter(user=user)

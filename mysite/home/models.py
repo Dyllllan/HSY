@@ -57,7 +57,62 @@ class HomePage(Page):
             # 2. 处理分类筛选
             category = request.GET.get('category', '').strip()
             if category:
-                if category in self.CATEGORY_KEYWORDS_CONFIG:
+                if category == '推荐':
+                    # 处理"推荐"分类：根据AI报告中的岗位推荐筛选
+                    if request.user.is_authenticated:
+                        try:
+                            from jobs.models import StudentProfile
+                            from jobs.report_parser import parse_ai_report
+                            profile = getattr(request.user, 'student_profile', None)
+                            if profile and profile.ai_report and profile.ai_report.strip():
+                                # 解析AI报告
+                                parsed_report = parse_ai_report(profile.ai_report)
+                                job_recommendations = parsed_report.get('job_recommendations', [])
+                                
+                                if job_recommendations:
+                                    # 根据推荐的岗位名称构建查询条件
+                                    recommendation_query = Q()
+                                    for rec in job_recommendations:
+                                        job_name = rec.get('name', '').strip()
+                                        if job_name:
+                                            # 提取岗位名称中的关键词（去除常见后缀）
+                                            keywords = [job_name]
+                                            # 如果包含"岗位"、"职位"等后缀，也尝试去掉后缀匹配
+                                            if '岗位' in job_name:
+                                                keywords.append(job_name.replace('岗位', '').strip())
+                                            if '职位' in job_name:
+                                                keywords.append(job_name.replace('职位', '').strip())
+                                            if '工作' in job_name:
+                                                keywords.append(job_name.replace('工作', '').strip())
+                                            
+                                            for keyword in keywords:
+                                                if keyword:
+                                                    recommendation_query |= (
+                                                        Q(job_title__icontains=keyword) |
+                                                        Q(description__icontains=keyword)
+                                                    )
+                                    
+                                    if recommendation_query:
+                                        jobs = jobs.filter(recommendation_query)
+                                    else:
+                                        # 如果没有匹配的推荐，返回空结果
+                                        jobs = jobs.none()
+                                else:
+                                    # 如果没有岗位推荐，返回空结果
+                                    jobs = jobs.none()
+                            else:
+                                # 用户没有AI报告，返回空结果
+                                jobs = jobs.none()
+                        except Exception as e:
+                            # 如果解析失败，返回空结果
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.error(f"解析AI报告失败: {str(e)}")
+                            jobs = jobs.none()
+                    else:
+                        # 未登录用户，返回空结果
+                        jobs = jobs.none()
+                elif category in self.CATEGORY_KEYWORDS_CONFIG:
                     cat_config = self.CATEGORY_KEYWORDS_CONFIG[category]
                     # 构建查询条件
                     keyword_query = Q()
@@ -95,6 +150,46 @@ class HomePage(Page):
             all_jobs_for_count = JobPage.objects.child_of(job_index).live().specific()
             total_count = all_jobs_for_count.count()
             
+            # 计算"推荐"分类的数量（仅当用户有AI报告时）
+            recommendation_count = 0
+            if request.user.is_authenticated:
+                try:
+                    from jobs.models import StudentProfile
+                    from jobs.report_parser import parse_ai_report
+                    profile = getattr(request.user, 'student_profile', None)
+                    if profile and profile.ai_report and profile.ai_report.strip():
+                        parsed_report = parse_ai_report(profile.ai_report)
+                        job_recommendations = parsed_report.get('job_recommendations', [])
+                        
+                        if job_recommendations:
+                            recommendation_query = Q()
+                            for rec in job_recommendations:
+                                job_name = rec.get('name', '').strip()
+                                if job_name:
+                                    keywords = [job_name]
+                                    if '岗位' in job_name:
+                                        keywords.append(job_name.replace('岗位', '').strip())
+                                    if '职位' in job_name:
+                                        keywords.append(job_name.replace('职位', '').strip())
+                                    if '工作' in job_name:
+                                        keywords.append(job_name.replace('工作', '').strip())
+                                    
+                                    for keyword in keywords:
+                                        if keyword:
+                                            recommendation_query |= (
+                                                Q(job_title__icontains=keyword) |
+                                                Q(description__icontains=keyword)
+                                            )
+                            
+                            if recommendation_query:
+                                recommendation_count = all_jobs_for_count.filter(recommendation_query).count()
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"计算推荐岗位数量失败: {str(e)}")
+            
+            category_counts['推荐'] = recommendation_count
+            
             # 如果职位数量较少，使用精确计算；否则使用估算
             if total_count < 1000:
                 for cat_name, cat_config in self.CATEGORY_KEYWORDS_CONFIG.items():
@@ -131,8 +226,9 @@ class HomePage(Page):
             context['jobs'] = []
             context['search_query'] = ''
             context['current_category'] = ''
-            # 初始化所有分类的count为0
+            # 初始化所有分类的count为0（包括推荐）
             context['category_counts'] = {cat: 0 for cat in self.CATEGORY_KEYWORDS_CONFIG.keys()}
+            context['category_counts']['推荐'] = 0
         
         # 检查用户是否已完成AI测评
         has_ai_report = False

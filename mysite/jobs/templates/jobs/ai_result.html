@@ -243,6 +243,87 @@
         color: #333333;
     }
     
+    /* 核心竞争力指标样式 */
+    .competency-item {
+        margin-bottom: 24px;
+    }
+    
+    .competency-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .competency-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .competency-label {
+        font-size: 15px;
+        font-weight: 600;
+        color: #333333;
+    }
+    
+    .competency-score {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333333;
+    }
+    
+    .competency-bar-container {
+        width: 100%;
+        height: 12px;
+        background: #F0F0F0;
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .competency-bar {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 1.5s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .competency-bar-blue {
+        background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+    }
+    
+    .competency-bar-green {
+        background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    }
+    
+    .competency-bar-purple {
+        background: linear-gradient(90deg, #7c3aed 0%, #a855f7 100%);
+    }
+    
+    .competency-bar-orange {
+        background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+    }
+    
+    .competency-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+    
     .report-score {
         display: inline-flex;
         align-items: center;
@@ -728,66 +809,57 @@
     </div>
     {% endif %}
     
-    <!-- 技能匹配度评分（带柱状图） -->
-    {% if parsed_report.skill_scores %}
+    <!-- 核心竞争力指标（带进度条） -->
     <div class="field-group">
         <div class="field-group-title">
-            <i class="bi bi-bar-chart-line" style="color: #4A90E2;"></i>
-            <span>技能匹配度评估</span>
+            <i class="bi bi-bullseye" style="color: #4A90E2;"></i>
+            <span>核心竞争力指标</span>
         </div>
         
-        <!-- 柱状图 -->
-        {% if parsed_report.skill_scores.technical_skill > 0 or parsed_report.skill_scores.soft_skill > 0 or parsed_report.skill_scores.overall_match > 0 %}
-        <div class="chart-container">
-            <canvas id="skillChart"></canvas>
-        </div>
-        {% endif %}
-        
-        <!-- 评分详情 -->
-        <div class="field-item">
-            <span class="field-label">技术技能</span>
-            <span class="field-value">
-                <span class="report-score">{{ parsed_report.skill_scores.technical_skill }}分</span>
-            </span>
-        </div>
-        <div class="field-item">
-            <span class="field-label">软技能</span>
-            <span class="field-value">
-                <span class="report-score">{{ parsed_report.skill_scores.soft_skill }}分</span>
-            </span>
-        </div>
-        <div class="field-item">
-            <span class="field-label">综合匹配度</span>
-            <span class="field-value">
-                <span class="report-score">{{ parsed_report.skill_scores.overall_match }}分</span>
-            </span>
+        <!-- 专业深度 -->
+        <div class="competency-item">
+            <div class="competency-header">
+                <span class="competency-label">专业深度</span>
+                <span class="competency-score" data-score="{{ parsed_report.competency_scores.professional_depth|default:0 }}">{{ parsed_report.competency_scores.professional_depth|default:0 }}%</span>
+            </div>
+            <div class="competency-bar-container">
+                <div class="competency-bar competency-bar-blue" data-percent="{{ parsed_report.competency_scores.professional_depth|default:0 }}" style="width: {{ parsed_report.competency_scores.professional_depth|default:0 }}%;"></div>
+            </div>
         </div>
         
-        <!-- 技能优势 -->
-        {% if parsed_report.skill_advantages %}
-        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #F5F5F5;">
-            <div style="font-weight: 600; color: #52C41A; margin-bottom: 12px;">技能优势</div>
-            <ul style="margin: 0; padding-left: 20px; color: #333333;">
-                {% for advantage in parsed_report.skill_advantages %}
-                <li>{{ advantage }}</li>
-                {% endfor %}
-            </ul>
+        <!-- 学习敏锐度 -->
+        <div class="competency-item">
+            <div class="competency-header">
+                <span class="competency-label">学习敏锐度</span>
+                <span class="competency-score" data-score="{{ parsed_report.competency_scores.learning_acuity|default:0 }}">{{ parsed_report.competency_scores.learning_acuity|default:0 }}%</span>
+            </div>
+            <div class="competency-bar-container">
+                <div class="competency-bar competency-bar-green" data-percent="{{ parsed_report.competency_scores.learning_acuity|default:0 }}" style="width: {{ parsed_report.competency_scores.learning_acuity|default:0 }}%;"></div>
+            </div>
         </div>
-        {% endif %}
         
-        <!-- 技能短板 -->
-        {% if parsed_report.skill_weaknesses %}
-        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #F5F5F5;">
-            <div style="font-weight: 600; color: #FF6B35; margin-bottom: 12px;">技能短板</div>
-            <ul style="margin: 0; padding-left: 20px; color: #333333;">
-                {% for weakness in parsed_report.skill_weaknesses %}
-                <li>{{ weakness }}</li>
-                {% endfor %}
-            </ul>
+        <!-- 逻辑架构能力 -->
+        <div class="competency-item">
+            <div class="competency-header">
+                <span class="competency-label">逻辑架构能力</span>
+                <span class="competency-score" data-score="{{ parsed_report.competency_scores.logical_architecture|default:0 }}">{{ parsed_report.competency_scores.logical_architecture|default:0 }}%</span>
+            </div>
+            <div class="competency-bar-container">
+                <div class="competency-bar competency-bar-purple" data-percent="{{ parsed_report.competency_scores.logical_architecture|default:0 }}" style="width: {{ parsed_report.competency_scores.logical_architecture|default:0 }}%;"></div>
+            </div>
         </div>
-        {% endif %}
+        
+        <!-- 抗压韧性 -->
+        <div class="competency-item">
+            <div class="competency-header">
+                <span class="competency-label">抗压韧性</span>
+                <span class="competency-score" data-score="{{ parsed_report.competency_scores.resilience|default:0 }}">{{ parsed_report.competency_scores.resilience|default:0 }}%</span>
+            </div>
+            <div class="competency-bar-container">
+                <div class="competency-bar competency-bar-orange" data-percent="{{ parsed_report.competency_scores.resilience|default:0 }}" style="width: {{ parsed_report.competency_scores.resilience|default:0 }}%;"></div>
+            </div>
+        </div>
     </div>
-    {% endif %}
     
     <!-- 岗位推荐 -->
     {% if parsed_report.job_recommendations %}
@@ -899,102 +971,34 @@
 </nav>
 
 <script>
-    // 初始化技能匹配度柱状图
+    // 初始化核心竞争力指标进度条动画
     document.addEventListener('DOMContentLoaded', function() {
-        {% if parsed_report_json %}
-        const parsedReport = {{ parsed_report_json|safe }};
-        const skillScores = parsedReport && parsedReport.skill_scores;
-        if (skillScores && (skillScores.technical_skill > 0 || skillScores.soft_skill > 0 || skillScores.overall_match > 0)) {
-            const ctx = document.getElementById('skillChart');
-            if (ctx) {
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['技术技能', '软技能', '综合匹配度'],
-                        datasets: [{
-                            label: '评分',
-                            data: [
-                                skillScores.technical_skill || 0,
-                                skillScores.soft_skill || 0,
-                                skillScores.overall_match || 0
-                            ],
-                            backgroundColor: [
-                                'rgba(156, 136, 255, 0.8)',
-                                'rgba(74, 144, 226, 0.8)',
-                                'rgba(82, 196, 26, 0.8)'
-                            ],
-                            borderColor: [
-                                'rgba(156, 136, 255, 1)',
-                                'rgba(74, 144, 226, 1)',
-                                'rgba(82, 196, 26, 1)'
-                            ],
-                            borderWidth: 2,
-                            borderRadius: 8,
-                            borderSkipped: false,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                padding: 12,
-                                titleFont: {
-                                    size: 14,
-                                    weight: 'bold'
-                                },
-                                bodyFont: {
-                                    size: 13
-                                },
-                                callbacks: {
-                                    label: function(context) {
-                                        return '评分: ' + context.parsed.y + '分';
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100,
-                                ticks: {
-                                    stepSize: 20,
-                                    font: {
-                                        size: 12
-                                    },
-                                    callback: function(value) {
-                                        return value + '分';
-                                    }
-                                },
-                                grid: {
-                                    color: 'rgba(0, 0, 0, 0.05)'
-                                }
-                            },
-                            x: {
-                                ticks: {
-                                    font: {
-                                        size: 13,
-                                        weight: 'bold'
-                                    }
-                                },
-                                grid: {
-                                    display: false
-                                }
-                            }
-                        },
-                        animation: {
-                            duration: 1500,
-                            easing: 'easeOutQuart'
-                        }
-                    }
-                });
-            }
-        }
-        {% endif %}
+        // 为所有进度条添加动画效果
+        const competencyBars = document.querySelectorAll('.competency-bar');
+        competencyBars.forEach((bar, index) => {
+            const percent = parseInt(bar.getAttribute('data-percent')) || 0;
+            // 初始宽度设为0，然后动画到目标宽度
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = percent + '%';
+            }, index * 200); // 每个进度条延迟200ms，形成依次出现的效果
+        });
+        
+        // 为分数添加计数动画
+        const competencyScores = document.querySelectorAll('.competency-score');
+        competencyScores.forEach((scoreEl, index) => {
+            const targetScore = parseInt(scoreEl.getAttribute('data-score')) || 0;
+            let currentScore = 0;
+            const increment = targetScore / 30; // 30帧动画
+            const timer = setInterval(() => {
+                currentScore += increment;
+                if (currentScore >= targetScore) {
+                    currentScore = targetScore;
+                    clearInterval(timer);
+                }
+                scoreEl.textContent = Math.round(currentScore) + '%';
+            }, 50); // 每50ms更新一次
+        });
         
         // 美化报告内容，添加图案元素
         const reportContent = document.getElementById('report-content');
@@ -1006,7 +1010,7 @@
         // 定义图标映射
         const iconMap = {
             '📊': { icon: 'bi-bar-chart-line', color: 'purple', title: '基本信息分析' },
-            '💼': { icon: 'bi-briefcase', color: 'blue', title: '技能匹配度' },
+            '💼': { icon: 'bi-bullseye', color: 'blue', title: '核心竞争力指标' },
             '🎯': { icon: 'bi-bullseye', color: 'green', title: '岗位推荐' },
             '💡': { icon: 'bi-lightbulb', color: 'orange', title: '提升建议' },
             '📈': { icon: 'bi-graph-up', color: 'yellow', title: '竞争力排名' },
