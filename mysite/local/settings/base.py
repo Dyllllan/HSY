@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from pathlib import Path
+import os
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = PROJECT_DIR.parent
@@ -194,6 +195,14 @@ STORAGES = {
 # can exceed this limit within Wagtail's page editor.
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
 
+
+# AI API配置
+# 支持的提供商: openai, qwen/tongyi(通义千问), wenxin/baidu(文心一言), zhipu(智谱AI)
+AI_PROVIDER = os.environ.get('AI_PROVIDER', 'openai')  # 默认使用OpenAI
+AI_API_KEY = os.environ.get('AI_API_KEY', '')  # API密钥，从环境变量读取
+AI_API_SECRET = os.environ.get('AI_API_SECRET', '')  # 部分API需要Secret Key
+AI_API_BASE = os.environ.get('AI_API_BASE', '')  # 自定义API端点（可选）
+AI_MODEL = os.environ.get('AI_MODEL', 'gpt-3.5-turbo')  # 模型名称
 
 # Wagtail settings
 

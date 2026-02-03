@@ -38,8 +38,8 @@ class ZhilianSpider(scrapy.Spider):
     }
     
     def start_requests(self):
-        keywords = ['艺术', '美术设计', '插画师', '原画师', '游戏美术']
-        city = '成都'  
+        keywords = ['教师', '班主任', '助教', '辅导员', '教务']
+        city = '佛山'  
         
         for keyword in keywords:
             # 使用智联招聘的搜索URL

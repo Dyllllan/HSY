@@ -306,10 +306,9 @@ def analyze_resume_api(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'文件读取失败: {str(e)}'})
     
-    # 调用AI分析接口（这里需要实现实际的AI分析逻辑）
-    # 目前返回模拟数据
+    # 调用AI分析接口
     try:
-        report = generate_ai_report(file, request.user)
+        report = generate_ai_report(file_path, request.user)
         file.close()
         
         # 保存分析结果到用户档案
@@ -377,42 +376,76 @@ def upload_avatar_api(request):
         })
 
 def generate_ai_report(file, user):
-    """生成AI报告（需要集成实际的AI API）"""
-    # TODO: 集成实际的AI API
-    # 这里返回一个示例报告
+    """生成AI报告（集成大模型API）"""
+    from .ai_service import get_ai_service
+    from .resume_parser import extract_text_from_resume
+    import os
+    from django.conf import settings
     
-    # 尝试读取文件内容（简化处理）
-    file_name = file.name.lower()
+    # 获取文件路径
+    if isinstance(file, str):
+        # 如果file是文件路径字符串
+        file_path = file
+    elif hasattr(file, 'path'):
+        # 如果file有path属性（Django FileField）
+        file_path = file.path
+    elif hasattr(file, 'read'):
+        # 如果是文件对象，保存到临时位置
+        import tempfile
+        import uuid
+        temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # 获取原始文件名
+        file_name = getattr(file, 'name', f'temp_{uuid.uuid4()}.pdf')
+        file_path = os.path.join(temp_dir, os.path.basename(file_name))
+        
+        # 保存文件
+        with open(file_path, 'wb') as f:
+            if hasattr(file, 'chunks'):
+                # Django上传文件
+                for chunk in file.chunks():
+                    f.write(chunk)
+            else:
+                # 普通文件对象
+                f.write(file.read())
+                file.seek(0)  # 重置文件指针
+    else:
+        raise ValueError(f"不支持的文件类型: {type(file)}")
     
-    report = f"""【AI职场竞争力报告】
+    # 提取简历文本
+    resume_text = extract_text_from_resume(file_path)
+    
+    if not resume_text:
+        return """【AI职场竞争力报告】
 
-根据您的简历分析，以下是您的职场竞争力评估：
-
-📊 基本信息分析
-文件类型: {file_name.split('.')[-1].upper()}
-分析时间: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-💼 技能匹配度
-技术技能: 85分
-软技能: 78分
-综合匹配度: 82分
-
-🎯 岗位推荐
-基于您的简历内容，我们为您推荐以下类型的岗位：
-1. 前端开发工程师
-2. 后端开发工程师
-3. 全栈开发工程师
-
-💡 提升建议
-1. 加强项目经验的描述
-2. 突出核心技能和成果
-3. 完善教育背景信息
-
-📈 竞争力排名
-在同类求职者中，您的竞争力排名：前30%
-
-注：此报告基于AI自动分析生成，仅供参考。实际匹配度可能因具体岗位要求而有所不同。
+⚠️ 无法提取简历文本内容
+请确保上传的是有效的PDF或DOCX格式文件。
 """
+    
+    # 获取用户信息（可选）
+    user_info = None
+    try:
+        profile = user.student_profile
+        user_info = {
+            'user_id': user.id,
+            'email': user.email,
+            'preferred_job_types': profile.get_preferred_job_types_list() if hasattr(profile, 'get_preferred_job_types_list') else [],
+        }
+    except:
+        pass
+    
+    # 调用AI服务生成报告
+    ai_service = get_ai_service()
+    report = ai_service.analyze_resume(resume_text, user_info)
+    
+    # 清理临时文件
+    temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
+    if 'temp' in file_path and os.path.dirname(file_path) == temp_dir:
+        try:
+            os.remove(file_path)
+        except:
+            pass
     
     return report
 

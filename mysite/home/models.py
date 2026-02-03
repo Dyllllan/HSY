@@ -134,4 +134,20 @@ class HomePage(Page):
             # 初始化所有分类的count为0
             context['category_counts'] = {cat: 0 for cat in self.CATEGORY_KEYWORDS_CONFIG.keys()}
         
+        # 检查用户是否已完成AI测评
+        has_ai_report = False
+        if request.user.is_authenticated:
+            try:
+                # 使用getattr安全获取student_profile，避免DoesNotExist异常
+                from jobs.models import StudentProfile
+                profile = getattr(request.user, 'student_profile', None)
+                if profile:
+                    if profile.ai_report and profile.ai_report.strip():
+                        has_ai_report = True
+            except Exception as e:
+                # 如果出现任何异常，has_ai_report保持False
+                pass
+        
+        context['has_ai_report'] = has_ai_report
+        
         return context
