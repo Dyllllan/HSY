@@ -49,8 +49,14 @@
     }
     
     .result-header .subtitle {
-        font-size: 12px;
-        opacity: 0.9;
+        font-size: 13px;
+        opacity: 0.95;
+        line-height: 1.6;
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        text-align: left;
     }
     
     /* 报告容器 */
@@ -790,6 +796,120 @@
     .nav-item.ai-planning-btn.active span {
         color: #9C88FF;
     }
+    
+    /* 底部职位推荐 */
+    .bottom-job-recommendations {
+        background: #ffffff;
+        margin: 16px;
+        margin-bottom: 80px; /* 为底部导航栏留出空间 */
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .bottom-job-recommendations-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #333333;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F5F5F5;
+    }
+    
+    .bottom-job-recommendations-header i {
+        color: #9C88FF;
+        font-size: 20px;
+    }
+    
+    .bottom-job-recommendations-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    
+    .bottom-job-card {
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.08) 0%, rgba(79, 172, 254, 0.08) 100%);
+        border-radius: 10px;
+        padding: 12px 16px;
+        border-left: 3px solid #9C88FF;
+        flex: 1 1 auto;
+        min-width: calc(50% - 5px);
+        max-width: calc(50% - 5px);
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+    }
+    
+    .bottom-job-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.2);
+        background: linear-gradient(135deg, rgba(156, 136, 255, 0.12) 0%, rgba(79, 172, 254, 0.12) 100%);
+    }
+    
+    @media (min-width: 480px) {
+        .bottom-job-card {
+            min-width: calc(33.333% - 7px);
+            max-width: calc(33.333% - 7px);
+        }
+    }
+    
+    @media (min-width: 768px) {
+        .bottom-job-card {
+            min-width: calc(25% - 8px);
+            max-width: calc(25% - 8px);
+        }
+    }
+    
+    .bottom-job-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333333;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.4;
+    }
+    
+    .bottom-job-action {
+        text-align: center;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #F5F5F5;
+    }
+    
+    .view-more-jobs-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
+        color: #ffffff;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(156, 136, 255, 0.3);
+    }
+    
+    .view-more-jobs-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(156, 136, 255, 0.4);
+        color: #ffffff;
+    }
+    
+    .view-more-jobs-btn i {
+        font-size: 16px;
+        transition: transform 0.3s ease;
+    }
+    
+    .view-more-jobs-btn:hover i {
+        transform: translateX(4px);
+    }
 </style>
 {% endblock %}
 
@@ -802,9 +922,9 @@
     </a>
     <h1>
         <i class="bi bi-stars"></i>
-        AI能力测评报告
+        多维评估报告
     </h1>
-    <div class="subtitle">基于AI深度分析的职场竞争力评估</div>
+    <div class="subtitle" id="matching-analysis-content">正在加载匹配解析报告...</div>
 </div>
 
 {% if has_report %}
@@ -863,26 +983,6 @@
         </div>
     </div>
     
-    <!-- 岗位推荐 -->
-    {% if parsed_report.job_recommendations %}
-    <div class="field-group">
-        <div class="field-group-title">
-            <i class="bi bi-briefcase" style="color: #52C41A;"></i>
-            <span>建议投递方向</span>
-        </div>
-        <div class="job-recommendations-container">
-            {% for job in parsed_report.job_recommendations %}
-            <div class="job-recommendation-card">
-                <div class="job-recommendation-name">{{ job.name }}</div>
-                {% if job.reason %}
-                <div class="job-recommendation-reason">{{ job.reason }}</div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-    
     <!-- 提升建议 -->
     {% if parsed_report.improvement_suggestions %}
     <div class="field-group">
@@ -938,6 +1038,49 @@
     </div>
     <div class="report-content" id="report-content">{{ ai_report }}</div>
 </div>
+
+<!-- 底部职位推荐 -->
+{% if has_report %}
+    {% if parsed_report and parsed_report.job_recommendations %}
+    <div class="bottom-job-recommendations">
+        <div class="bottom-job-recommendations-header">
+            <i class="bi bi-briefcase"></i>
+            <span>为你推荐的岗位</span>
+        </div>
+        <div class="bottom-job-recommendations-container">
+            {% for job in parsed_report.job_recommendations %}
+            <div class="bottom-job-card">
+                <div class="bottom-job-name">{{ job.name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="bottom-job-action">
+            <a href="/jobs/" class="view-more-jobs-btn">
+                <span>查看为你定制的岗位列表</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <!-- 如果没有解析到推荐，尝试从原始报告中提取 -->
+    <div class="bottom-job-recommendations" id="bottom-job-recommendations-fallback" style="display: none;">
+        <div class="bottom-job-recommendations-header">
+            <i class="bi bi-briefcase"></i>
+            <span>为你推荐的岗位</span>
+        </div>
+        <div class="bottom-job-recommendations-container" id="fallback-job-container">
+            <!-- 将通过JavaScript填充 -->
+        </div>
+        <div class="bottom-job-action">
+            <a href="/jobs/" class="view-more-jobs-btn">
+                <span>查看为你定制的岗位列表</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+
 {% else %}
 <!-- 空状态 -->
 <div class="empty-state">
@@ -1004,12 +1147,96 @@
             }, 50); // 每50ms更新一次
         });
         
-        // 美化报告内容，添加图案元素
+        // 提取匹配解析报告内容并放到顶部
+        const matchingAnalysisEl = document.getElementById('matching-analysis-content');
         const reportContent = document.getElementById('report-content');
         if (!reportContent) return;
         
-        let content = reportContent.textContent || reportContent.innerText;
+        // 保存原始报告文本（用于后续提取岗位推荐）
+        const originalReportText = reportContent.textContent || reportContent.innerText || '';
+        
+        let content = originalReportText;
         let html = '';
+        
+        // 提取匹配解析报告部分（☆ 匹配解析报告）
+        let matchingAnalysisText = '';
+        const lines = content.split('\n');
+        let inMatchingSection = false;
+        let matchingLines = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // 检测匹配解析报告开始
+            if (line.includes('☆') && (line.includes('匹配解析报告') || line.includes('匹配解析'))) {
+                inMatchingSection = true;
+                // 如果标题行后面还有内容，也提取
+                const titleMatch = line.match(/匹配解析报告[：:]\s*(.+)/);
+                if (titleMatch && titleMatch[1]) {
+                    matchingLines.push(titleMatch[1]);
+                }
+                continue;
+            }
+            
+            // 检测下一个section开始（emoji开头、| 开头、或标题）
+            if (inMatchingSection) {
+                if (line.match(/^[💼🎯💡📈📊|]/) || line.match(/^【.*】/) || line.match(/^[◎]/)) {
+                    inMatchingSection = false;
+                    break;
+                }
+                // 跳过空行和标题行
+                if (line && !line.match(/^【.*】/) && !line.match(/^匹配解析报告/)) {
+                    matchingLines.push(line);
+                }
+            }
+        }
+        
+        // 将匹配解析报告内容放到顶部
+        if (matchingLines.length > 0 && matchingAnalysisEl) {
+            matchingAnalysisText = matchingLines.join(' ').trim();
+            // 移除可能的标题标记和多余空格
+            matchingAnalysisText = matchingAnalysisText.replace(/^匹配解析报告[：:]\s*/i, '');
+            matchingAnalysisText = matchingAnalysisText.replace(/\s+/g, ' ');
+            matchingAnalysisEl.textContent = matchingAnalysisText || '基于简历语义深度评估，完整报告已生成';
+        } else if (matchingAnalysisEl) {
+            matchingAnalysisEl.textContent = '基于简历语义深度评估，完整报告已生成';
+        }
+        
+        // 从原始内容中移除匹配解析报告部分和标题
+        const filteredLines = [];
+        let skipTitle = false;
+        let skipMatching = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // 跳过【AI职场竞争力报告】标题
+            if (line.match(/^【AI职场竞争力报告】/)) {
+                skipTitle = true;
+                continue;
+            }
+            
+            // 跳过匹配解析报告部分
+            if (line.includes('☆') && (line.includes('匹配解析报告') || line.includes('匹配解析'))) {
+                skipMatching = true;
+                continue;
+            }
+            
+            if (skipMatching) {
+                // 检测下一个section开始（emoji、|、◎等）
+                if (line.match(/^[💼🎯💡📈📊|◎]/) || line.match(/^【.*】/)) {
+                    skipMatching = false;
+                } else {
+                    continue;
+                }
+            }
+            
+            if (!skipTitle && !skipMatching && line) {
+                filteredLines.push(line);
+            }
+        }
+        
+        content = filteredLines.join('\n');
         
         // 定义图标映射
         const iconMap = {
@@ -1021,7 +1248,7 @@
         };
         
         // 按行分割内容
-        const lines = content.split('\n').filter(line => line.trim());
+        const processedLines = content.split('\n').filter(line => line.trim());
         let currentSection = null;
         let sectionLines = [];
         
@@ -1039,6 +1266,12 @@
                 sectionLines.forEach(line => {
                     line = line.trim();
                     if (!line) return;
+                    
+                    // 跳过【AI职场竞争力报告】标题和匹配解析报告标题
+                    if (line.match(/^【AI职场竞争力报告】/) || 
+                        (line.includes('☆') && line.includes('匹配解析报告'))) {
+                        return;
+                    }
                     
                     // 处理列表项
                     if (line.match(/^\d+\./)) {
@@ -1073,9 +1306,10 @@
                         html += `<div class="report-item-content">${line}</div>`;
                         html += '</div>';
                     }
-                    // 处理标题行（包含emoji）
+                    // 跳过标题行（不再显示【AI职场竞争力报告】等标题）
                     else if (line.match(/^【.*】/)) {
-                        html += `<div style="text-align: center; font-size: 20px; font-weight: 700; color: #9C88FF; margin-bottom: 24px; padding: 16px; background: linear-gradient(135deg, rgba(156, 136, 255, 0.1) 0%, rgba(123, 104, 238, 0.1) 100%); border-radius: 12px;">${line}</div>`;
+                        // 不显示标题，直接跳过
+                        return;
                     }
                     // 处理普通文本
                     else {
@@ -1097,9 +1331,14 @@
         }
         
         // 处理每一行
-        lines.forEach((line, index) => {
+        processedLines.forEach((line, index) => {
             line = line.trim();
             if (!line) return;
+            
+            // 跳过【AI职场竞争力报告】标题
+            if (line.match(/^【AI职场竞争力报告】/)) {
+                return;
+            }
             
             // 检查是否是新的section标题（包含emoji）
             let foundSection = false;
@@ -1121,12 +1360,8 @@
                 if (currentSection) {
                     sectionLines.push(line);
                 } else {
-                    // 处理开头的标题
-                    if (line.match(/^【.*】/)) {
-                        html += `<div style="text-align: center; font-size: 20px; font-weight: 700; color: #9C88FF; margin-bottom: 24px; padding: 16px; background: linear-gradient(135deg, rgba(156, 136, 255, 0.1) 0%, rgba(123, 104, 238, 0.1) 100%); border-radius: 12px;">${line}</div>`;
-                    } else {
-                        html += `<div class="report-item"><div class="report-item-content">${line}</div></div>`;
-                    }
+                    // 不再显示标题，直接作为普通内容处理
+                    html += `<div class="report-item"><div class="report-item-content">${line}</div></div>`;
                 }
             }
         });
@@ -1148,6 +1383,65 @@
         } else {
             // 如果没有解析出内容，使用原始文本
             reportContent.innerHTML = content.replace(/\n/g, '<br>');
+        }
+        
+        // 提取岗位推荐并显示在底部（备用方案）
+        const fallbackContainer = document.getElementById('fallback-job-container');
+        const fallbackSection = document.getElementById('bottom-job-recommendations-fallback');
+        
+        if (fallbackContainer && fallbackSection) {
+            // 从原始报告文本中提取岗位推荐
+            const allLines = originalReportText.split('\n');
+            let inJobSection = false;
+            const jobNames = [];
+            
+            for (let i = 0; i < allLines.length; i++) {
+                const line = allLines[i].trim();
+                
+                // 检测"建议投递方向"或"|"开头的section
+                if ((line.includes('|') && (line.includes('建议投递方向') || line.includes('投递方向'))) || 
+                    (line.includes('🎯') && (line.includes('岗位推荐') || line.includes('建议投递')))) {
+                    inJobSection = true;
+                    continue;
+                }
+                
+                // 检测下一个section开始
+                if (inJobSection) {
+                    if (line.match(/^【.*】/) || line.match(/^[💼◎💡📈]/) || !line) {
+                        break;
+                    }
+                    
+                    // 提取岗位名称（移除数字前缀和特殊字符）
+                    let cleanLine = line.replace(/^\d+[\.、]\s*/, '').replace(/[|🎯]/g, '').trim();
+                    
+                    // 移除可能的格式说明文字
+                    if (cleanLine.includes('格式要求') || cleanLine.includes('示例格式') || 
+                        cleanLine.includes('【') || cleanLine.includes('】')) {
+                        continue;
+                    }
+                    
+                    if (cleanLine && cleanLine.length > 1 && cleanLine.length < 30) {
+                        // 排除明显的非岗位名称行
+                        if (!cleanLine.match(/^(建议|投递|方向|格式|示例|要求|列出|岗位名称)/) &&
+                            !cleanLine.match(/^[0-9]/) && 
+                            cleanLine.length > 2) {
+                            jobNames.push(cleanLine);
+                        }
+                    }
+                }
+            }
+            
+            // 如果找到了岗位推荐，显示底部推荐区域
+            if (jobNames.length > 0 && jobNames.length <= 10) {
+                fallbackContainer.innerHTML = '';
+                jobNames.forEach(jobName => {
+                    const jobCard = document.createElement('div');
+                    jobCard.className = 'bottom-job-card';
+                    jobCard.innerHTML = `<div class="bottom-job-name">${jobName}</div>`;
+                    fallbackContainer.appendChild(jobCard);
+                });
+                fallbackSection.style.display = 'block';
+            }
         }
     });
 </script>

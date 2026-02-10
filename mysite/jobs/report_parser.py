@@ -27,25 +27,53 @@ class ReportParser:
         
         try:
             # 提取基本信息
-            self.parsed_data['basic_info'] = self._parse_basic_info()
+            try:
+                self.parsed_data['basic_info'] = self._parse_basic_info()
+            except Exception as e:
+                logger.warning(f"解析基本信息失败: {str(e)}")
+                self.parsed_data['basic_info'] = self._get_empty_data()['basic_info']
             
             # 提取核心竞争力指标评分
-            self.parsed_data['competency_scores'] = self._parse_competency_scores()
+            try:
+                self.parsed_data['competency_scores'] = self._parse_competency_scores()
+            except Exception as e:
+                logger.warning(f"解析核心竞争力指标失败: {str(e)}")
+                self.parsed_data['competency_scores'] = self._get_empty_data()['competency_scores']
             
             # 提取岗位推荐
-            self.parsed_data['job_recommendations'] = self._parse_job_recommendations()
+            try:
+                self.parsed_data['job_recommendations'] = self._parse_job_recommendations()
+            except Exception as e:
+                logger.warning(f"解析岗位推荐失败: {str(e)}")
+                self.parsed_data['job_recommendations'] = []
             
             # 提取提升建议
-            self.parsed_data['improvement_suggestions'] = self._parse_improvement_suggestions()
+            try:
+                self.parsed_data['improvement_suggestions'] = self._parse_improvement_suggestions()
+            except Exception as e:
+                logger.warning(f"解析提升建议失败: {str(e)}")
+                self.parsed_data['improvement_suggestions'] = []
             
             # 提取竞争力排名
-            self.parsed_data['competitiveness_rank'] = self._parse_competitiveness_rank()
+            try:
+                self.parsed_data['competitiveness_rank'] = self._parse_competitiveness_rank()
+            except Exception as e:
+                logger.warning(f"解析竞争力排名失败: {str(e)}")
+                self.parsed_data['competitiveness_rank'] = ''
             
             # 提取技能优势分析
-            self.parsed_data['skill_advantages'] = self._parse_skill_advantages()
+            try:
+                self.parsed_data['skill_advantages'] = self._parse_skill_advantages()
+            except Exception as e:
+                logger.warning(f"解析技能优势失败: {str(e)}")
+                self.parsed_data['skill_advantages'] = []
             
             # 提取技能短板分析
-            self.parsed_data['skill_weaknesses'] = self._parse_skill_weaknesses()
+            try:
+                self.parsed_data['skill_weaknesses'] = self._parse_skill_weaknesses()
+            except Exception as e:
+                logger.warning(f"解析技能短板失败: {str(e)}")
+                self.parsed_data['skill_weaknesses'] = []
             
             return self.parsed_data
         except Exception as e:
@@ -98,8 +126,16 @@ class ReportParser:
             'resilience': 0                 # 抗压韧性
         }
         
-        # 首先尝试查找新格式：核心竞争力指标
-        competency_section = self._extract_section('核心竞争力指标', '💼')
+        # 首先尝试查找新格式：核心竞争力指标评估
+        competency_section = self._extract_section('核心竞争力指标评估', '💼')
+        
+        # 如果没找到，尝试查找"核心竞争力指标"
+        if not competency_section:
+            competency_section = self._extract_section('核心竞争力指标', '💼')
+        
+        # 如果还没找到，尝试查找"◎ 核心竞争力指标"
+        if not competency_section:
+            competency_section = self._extract_section('核心竞争力指标', '◎')
         
         if competency_section:
             # 提取专业深度评分（支持多种格式：95分、95、专业深度：95等）
@@ -240,14 +276,44 @@ class ReportParser:
         """解析岗位推荐"""
         recommendations = []
         
-        # 查找岗位推荐部分
+        # 查找岗位推荐部分（支持多种格式）
         job_section = self._extract_section('岗位推荐', '🎯')
         
+        # 如果没找到，尝试查找"建议投递方向"
+        if not job_section:
+            job_section = self._extract_section('建议投递方向', '|')
+        
+        # 如果还没找到，尝试在整个报告中搜索
+        if not job_section:
+            # 查找包含"建议投递方向"或"|"的行
+            lines = self.report_text.split('\n')
+            in_section = False
+            section_lines = []
+            
+            for line in lines:
+                line = line.strip()
+                # 检测section开始
+                if '|' in line and ('建议投递方向' in line or '投递方向' in line):
+                    in_section = True
+                    continue
+                
+                # 检测下一个section开始
+                if in_section:
+                    if line.startswith('【') or line.startswith('💼') or line.startswith('◎') or not line:
+                        break
+                    section_lines.append(line)
+            
+            if section_lines:
+                job_section = '\n'.join(section_lines)
+        
         if job_section:
-            # 提取列表项（数字开头的行）
+            # 提取列表项（支持多种格式）
             lines = job_section.split('\n')
             for line in lines:
                 line = line.strip()
+                if not line:
+                    continue
+                
                 # 匹配 "1. 岗位名称" 或 "1、岗位名称" 格式
                 match = re.match(r'^\d+[\.、]\s*(.+?)(?:\s*[-—]\s*(.+))?$', line)
                 if match:
@@ -262,6 +328,15 @@ class ReportParser:
                         'name': job_name,
                         'reason': reason
                     })
+                # 如果没有数字前缀，直接作为岗位名称（新格式）
+                elif line and not line.startswith('【') and not line.startswith('💼') and not line.startswith('◎'):
+                    # 移除可能的标记符号
+                    job_name = line.replace('|', '').replace('建议投递方向', '').replace('投递方向', '').strip()
+                    if job_name and len(job_name) > 1:
+                        recommendations.append({
+                            'name': job_name,
+                            'reason': ''
+                        })
         
         return recommendations
     
@@ -343,20 +418,36 @@ class ReportParser:
         if not self.report_text:
             return None
         
+        # 转义特殊字符（如 | 在正则中是特殊字符）
+        escaped_emoji = re.escape(emoji) if emoji else None
+        
         # 构建匹配模式
-        patterns = [
-            rf'{emoji}\s*{section_name}[：:]*\s*\n(.*?)(?=\n[📊💼🎯💡📈]|$)',
-            rf'{section_name}[：:]*\s*\n(.*?)(?=\n[📊💼🎯💡📈]|$)',
-            rf'{emoji}.*?{section_name}[：:]*\s*\n(.*?)(?=\n[📊💼🎯💡📈]|$)',
-        ]
+        patterns = []
         
         if emoji:
-            patterns.insert(0, rf'{emoji}\s*{section_name}[：:]*\s*\n(.*?)(?=\n[📊💼🎯💡📈]|$)')
+            # 如果emoji是 |，需要特殊处理
+            if emoji == '|':
+                patterns.append(rf'\|\s*{re.escape(section_name)}[：:]*\s*\n(.*?)(?=\n[📊💼🎯💡📈|◎]|$)')
+                patterns.append(rf'\|\s*{re.escape(section_name)}[：:]*\s*(.*?)(?=\n[📊💼🎯💡📈|◎]|$)')
+            else:
+                patterns.append(rf'{escaped_emoji}\s*{re.escape(section_name)}[：:]*\s*\n(.*?)(?=\n[📊💼🎯💡📈|◎]|$)')
+                patterns.append(rf'{escaped_emoji}\s*{re.escape(section_name)}[：:]*\s*(.*?)(?=\n[📊💼🎯💡📈|◎]|$)')
+        
+        patterns.extend([
+            rf'{re.escape(section_name)}[：:]*\s*\n(.*?)(?=\n[📊💼🎯💡📈|◎]|$)',
+            rf'{re.escape(section_name)}[：:]*\s*(.*?)(?=\n[📊💼🎯💡📈|◎]|$)',
+        ])
         
         for pattern in patterns:
-            match = re.search(pattern, self.report_text, re.DOTALL | re.IGNORECASE)
-            if match:
-                return match.group(1).strip()
+            try:
+                match = re.search(pattern, self.report_text, re.DOTALL | re.IGNORECASE)
+                if match and len(match.groups()) > 0 and match.group(1):
+                    result = match.group(1).strip()
+                    if result:
+                        return result
+            except Exception as e:
+                logger.debug(f"正则匹配失败: {pattern}, 错误: {str(e)}")
+                continue
         
         return None
     
