@@ -68,8 +68,8 @@ os.environ['AI_API_BASE'] = 'https://api.deepseek.com/v1'  # DeepSeek API端点
 
 # 方案2: 通义千问（阿里云，香港可用，备选方案）
 # 如需使用通义千问，取消下面的注释并注释掉上面的DeepSeek配置
-# os.environ['AI_PROVIDER'] = 'qwen'
-# os.environ['AI_API_KEY'] = 'your-qwen-api-key-here'
+## os.environ['AI_API_KEY'] = 'your-qwen-api-key-here'
+ #os.environ['AI_PROVIDER'] = 'qwen'
 # os.environ['AI_MODEL'] = 'qwen-turbo'
 # os.environ['AI_API_BASE'] = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
 

@@ -19,28 +19,28 @@
     /* 页面头部 */
     .result-header {
         background: linear-gradient(135deg, #9C88FF 0%, #7B68EE 100%);
-        padding: 24px 16px;
+        padding: 16px 16px 12px;
         color: #ffffff;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
     }
     
     .result-header h1 {
-        font-size: 24px;
+        font-size: 20px;
         font-weight: 700;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
     }
     
     .result-header .back-btn {
         color: #ffffff;
         text-decoration: none;
-        font-size: 20px;
+        font-size: 18px;
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
+        gap: 6px;
+        margin-bottom: 8px;
         transition: opacity 0.2s;
     }
     
@@ -49,7 +49,7 @@
     }
     
     .result-header .subtitle {
-        font-size: 14px;
+        font-size: 12px;
         opacity: 0.9;
     }
     
@@ -57,7 +57,7 @@
     .report-card {
         background: #ffffff;
         border-radius: 16px;
-        padding: 24px;
+        padding: 16px;
         margin: 0 16px 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
@@ -66,8 +66,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 16px;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
         border-bottom: 1px solid #F5F5F5;
     }
     
@@ -245,7 +245,7 @@
     
     /* 核心竞争力指标样式 */
     .competency-item {
-        margin-bottom: 24px;
+        margin-bottom: 16px;
     }
     
     .competency-item:last-child {
@@ -256,17 +256,17 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
     }
     
     .competency-label {
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 600;
         color: #333333;
     }
     
     .competency-score {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         color: #333333;
     }
@@ -338,26 +338,26 @@
     
     /* 结构化字段展示 */
     .structured-fields {
-        margin-bottom: 24px;
+        margin-bottom: 16px;
     }
     
     .field-group {
         background: #ffffff;
         border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 16px;
+        padding: 16px;
+        margin-bottom: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
     
     .field-group-title {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         color: #333333;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
         gap: 8px;
-        padding-bottom: 12px;
+        padding-bottom: 8px;
         border-bottom: 2px solid #F5F5F5;
     }
     
@@ -404,32 +404,68 @@
         border-radius: 12px;
     }
     
+    /* 岗位推荐容器 */
+    .job-recommendations-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    
     /* 岗位推荐卡片 */
     .job-recommendation-card {
         background: linear-gradient(135deg, rgba(156, 136, 255, 0.05) 0%, rgba(79, 172, 254, 0.05) 100%);
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
-        border-left: 4px solid #9C88FF;
+        border-radius: 10px;
+        padding: 10px 12px;
+        border-left: 3px solid #9C88FF;
         transition: all 0.3s ease;
+        flex: 1 1 auto;
+        min-width: calc(50% - 4px);
+        max-width: calc(50% - 4px);
+        box-sizing: border-box;
+    }
+    
+    /* 如果有3-4个岗位，在较大屏幕上可以一行显示 */
+    @media (min-width: 480px) {
+        .job-recommendation-card {
+            min-width: calc(33.333% - 6px);
+            max-width: calc(33.333% - 6px);
+        }
+    }
+    
+    /* 在更大的屏幕上，4个岗位可以一行显示 */
+    @media (min-width: 768px) {
+        .job-recommendation-card {
+            min-width: calc(25% - 6px);
+            max-width: calc(25% - 6px);
+        }
+    }
+    
+    /* 如果只有2个岗位，让它们各占50% */
+    .job-recommendations-container:has(.job-recommendation-card:nth-child(2):last-child) .job-recommendation-card {
+        min-width: calc(50% - 4px);
+        max-width: calc(50% - 4px);
     }
     
     .job-recommendation-card:hover {
-        transform: translateX(4px);
+        transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(156, 136, 255, 0.15);
     }
     
     .job-recommendation-name {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
         color: #333333;
-        margin-bottom: 8px;
+        margin-bottom: 0;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.4;
     }
     
     .job-recommendation-reason {
-        font-size: 14px;
-        color: #666666;
-        line-height: 1.6;
+        display: none; /* 横向排列时隐藏详细理由，保持简洁 */
     }
     
     /* 建议列表 */
@@ -442,8 +478,8 @@
     .suggestion-item {
         display: flex;
         align-items: flex-start;
-        gap: 12px;
-        padding: 12px 0;
+        gap: 10px;
+        padding: 10px 0;
         border-bottom: 1px solid #F5F5F5;
     }
     
@@ -775,40 +811,6 @@
 <!-- 结构化字段展示 -->
 {% if parsed_report %}
 <div class="structured-fields">
-    <!-- 基本信息 -->
-    {% if parsed_report.basic_info %}
-    <div class="field-group">
-        <div class="field-group-title">
-            <i class="bi bi-info-circle" style="color: #9C88FF;"></i>
-            <span>基本信息</span>
-        </div>
-        {% if parsed_report.basic_info.education %}
-        <div class="field-item">
-            <span class="field-label">教育背景</span>
-            <span class="field-value">{{ parsed_report.basic_info.education }}</span>
-        </div>
-        {% endif %}
-        {% if parsed_report.basic_info.work_experience %}
-        <div class="field-item">
-            <span class="field-label">工作经验</span>
-            <span class="field-value">{{ parsed_report.basic_info.work_experience }}</span>
-        </div>
-        {% endif %}
-        {% if parsed_report.basic_info.core_skills %}
-        <div class="field-item">
-            <span class="field-label">核心技能</span>
-            <span class="field-value">
-                <ul>
-                    {% for skill in parsed_report.basic_info.core_skills %}
-                    <li>{{ skill }}</li>
-                    {% endfor %}
-                </ul>
-            </span>
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-    
     <!-- 核心竞争力指标（带进度条） -->
     <div class="field-group">
         <div class="field-group-title">
@@ -866,16 +868,18 @@
     <div class="field-group">
         <div class="field-group-title">
             <i class="bi bi-briefcase" style="color: #52C41A;"></i>
-            <span>岗位推荐</span>
+            <span>建议投递方向</span>
         </div>
-        {% for job in parsed_report.job_recommendations %}
-        <div class="job-recommendation-card">
-            <div class="job-recommendation-name">{{ job.name }}</div>
-            {% if job.reason %}
-            <div class="job-recommendation-reason">{{ job.reason }}</div>
-            {% endif %}
+        <div class="job-recommendations-container">
+            {% for job in parsed_report.job_recommendations %}
+            <div class="job-recommendation-card">
+                <div class="job-recommendation-name">{{ job.name }}</div>
+                {% if job.reason %}
+                <div class="job-recommendation-reason">{{ job.reason }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
     {% endif %}
     
