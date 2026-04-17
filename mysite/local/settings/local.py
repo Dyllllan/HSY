@@ -62,7 +62,7 @@ import os
 
 # 方案1: DeepSeek（推荐，香港可用，性价比高）
 os.environ['AI_PROVIDER'] = 'deepseek'
-os.environ['AI_API_KEY'] = 'sk-apikey'
+os.environ['AI_API_KEY'] = ''
 os.environ['AI_MODEL'] = 'deepseek-chat'
 os.environ['AI_API_BASE'] = 'https://api.deepseek.com/v1'  # DeepSeek API端点
 
