@@ -322,7 +322,7 @@
             <i class="bi bi-person-circle display-4 text-primary mb-3"></i>
             <h2>完善个人档案</h2>
             <p>请先完善您的个人档案，以便我们为您推荐合适的职位</p>
-            <a href="/accounts/dashboard/" class="btn btn-primary btn-lg">
+            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">
                 <i class="bi bi-person-gear me-2"></i>完善档案
             </a>
         </div>
@@ -452,10 +452,10 @@
             <h3>暂无个性化推荐</h3>
             <p>请完善您的个人档案或尝试浏览所有职位</p>
             <div class="d-flex gap-2 justify-content-center flex-wrap">
-                <a href="/accounts/dashboard/" class="btn btn-primary">
+                <a href="{% url 'dashboard' %}" class="btn btn-primary">
                     <i class="bi bi-person-gear me-2"></i>完善档案
                 </a>
-                <a href="/jobs/" class="btn btn-outline-primary">
+                <a href="/" class="btn btn-outline-primary">
                     <i class="bi bi-search me-2"></i>浏览所有职位
                 </a>
             </div>

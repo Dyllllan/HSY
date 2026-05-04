@@ -17,13 +17,7 @@ def personalized_recommendations(request):
     """基于学生档案的个性化职位推荐"""
     user = request.user
     
-    # 获取学生档案（确保已创建）
-    try:
-        profile = user.student_profile
-    except StudentProfile.DoesNotExist:
-        # 如果档案不存在，重定向到完善信息页面
-        from django.shortcuts import redirect
-        return redirect('complete_profile')
+    profile, created = StudentProfile.objects.get_or_create(user=user)
     
     # 基础查询：所有已发布的职位 - 直接使用 JobPage.objects 确保可以过滤 JobPage 字段
     all_jobs = JobPage.objects.live()
@@ -70,6 +64,10 @@ def personalized_recommendations(request):
     # 组合结果：应届生职位在前，其他在后
     final_jobs = list(fresh_graduate_jobs) + [job for job in major_jobs if job not in fresh_graduate_jobs]
     
+    # 如果严格匹配没有结果，退回到职位类型匹配，避免推荐页空掉
+    if not final_jobs:
+        final_jobs = list(type_jobs[:20])
+
     # 去重并限制数量
     seen_ids = set()
     unique_jobs = []
@@ -79,10 +77,16 @@ def personalized_recommendations(request):
             unique_jobs.append(job)
     
     recommendations = unique_jobs[:20]  # 最多推荐20个
+
+    if request.user.is_authenticated:
+        for job in recommendations:
+            job.is_saved_by_user = job.is_saved_by_user(request.user)
     
     return render(request, 'jobs/recommendations.html', {
         'recommendations': recommendations,
         'profile': profile,
+        'preferred_locations_list': preferred_locations,
+        'has_ai_report': bool(profile.ai_report and profile.ai_report.strip()),
     })
 
 
