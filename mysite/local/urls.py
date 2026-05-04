@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.urls import include, path
 from django.contrib import admin
+from django.views.generic import RedirectView
 
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail import urls as wagtail_urls
@@ -26,9 +27,18 @@ urlpatterns = [
     path("api/upload-avatar/", jobs_views.upload_avatar_api, name="upload_avatar_api"),
     # 地点数据API
     path("api/location-data/", jobs_views.get_location_data, name="location_data"),
-    # AI职场导航
-    path("recommendations/", jobs_views.ai_career_navigation, name="ai_career_navigation"),
-    path("AIresult/", jobs_views.ai_result_page, name="ai_result"),
+    # AI 规划 / 报告 / 个性化推荐（与 Wagtail 解耦的固定路径）
+    path("ai/plan/", jobs_views.ai_career_navigation, name="ai_plan"),
+    path("ai/result/", jobs_views.ai_result_page, name="ai_result"),
+    path(
+        "AIresult/",
+        RedirectView.as_view(url="/ai/result/", permanent=False),
+    ),
+    path(
+        "recommendations/",
+        jobs_views.personalized_recommendations,
+        name="recommendations_view",
+    ),
     # 职位列表页面（如果 Wagtail 中没有 jobs 页面，使用这个视图）
     path("jobs/", jobs_views.job_index_view, name="job_index"),
     path("api/upload-resume/", jobs_views.upload_resume_api, name="upload_resume_api"),
@@ -39,6 +49,17 @@ urlpatterns = [
     path("api/confirm-resume-info/", jobs_views.confirm_resume_info_api, name="confirm_resume_info_api"),
     # 收藏职位API
     path("api/toggle-save-job/", jobs_api.toggle_save_job, name="toggle_save_job"),
+    path("api/apply-job/", jobs_api.apply_job, name="apply_job_api"),
+    path(
+        "api/update-application-notes/<int:application_id>/",
+        jobs_api.update_application_notes,
+        name="update_application_notes",
+    ),
+    path(
+        "api/track-recommendation-click/",
+        jobs_api.track_recommendation_click,
+        name="track_recommendation_click",
+    ),
 ]
 
 # 在 DEBUG 模式下添加静态文件服务

@@ -534,7 +534,7 @@
         align-items: center;
         justify-content: center;
         gap: 4px;
-        padding: 6px 16px;
+        padding: 6px 8px;
         color: #999999;
         text-decoration: none;
         font-size: 12px;
@@ -819,8 +819,9 @@
         .then(data => {
             if (data.success) {
                 updateStepProgress(2);
-                // 调用AI分析接口
-                analyzeResume(data.file_id);
+                setTimeout(() => {
+                    window.location.href = '/resume/edit/';
+                }, 300);
             } else {
                 showError(data.message || '文件上传失败，请重试');
                 resetTestUpload();
@@ -845,68 +846,6 @@
             uploadSection.style.display = 'block';
         }
     }
-    
-    /**
-     * 调用外部AI API分析简历
-     * @param {string} fileId - 简历文件ID
-     */
-    function analyzeResume(fileId) {
-        // 更新步骤进度 - 显示正在分析
-        updateStepProgress(2);
-        
-        // 显示加载状态
-        reportContent.style.display = 'none';
-        reportError.style.display = 'none';
-        reportLoading.style.display = 'block';
-        
-        // 调用后端API接口
-        fetch('/api/analyze-resume/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({file_id: fileId})
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            reportLoading.style.display = 'none';
-            console.log('AI分析响应:', data); // 调试信息
-            if (data.success) {
-                // 深度解析（步骤2）完成，立即跳转到简历编辑页面
-                // 不更新到步骤3，直接跳转
-                console.log('深度解析完成，准备跳转到 /resume/edit/'); // 调试信息
-                // 确保跳转执行
-                setTimeout(() => {
-                    window.location.href = '/resume/edit/';
-                }, 500); // 短暂延迟确保状态更新
-            } else {
-                console.error('AI分析失败:', data.message); // 调试信息
-                showError(data.message || '简历分析失败，请重试');
-                // 显示上传按钮以便重试
-                const uploadSection = document.getElementById('test-upload-section');
-                if (uploadSection) {
-                    uploadSection.style.display = 'block';
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Analysis error:', error);
-            reportLoading.style.display = 'none';
-            showError('网络错误，请重试');
-            // 显示上传按钮以便重试
-            const uploadSection = document.getElementById('test-upload-section');
-            if (uploadSection) {
-                uploadSection.style.display = 'block';
-            }
-        });
-    }
-    
     // 更新步骤进度
     function updateStepProgress(step) {
         // 激活当前步骤
@@ -952,8 +891,6 @@
         reportError.style.display = 'block';
     }
     
-    // 导出函数供外部调用
-    window.analyzeResume = analyzeResume;
 </script>
 
 <!-- 底部导航栏 -->
@@ -962,11 +899,15 @@
         <i class="bi bi-house-fill nav-icon"></i>
         <span>首页</span>
     </a>
-    <a href="/recommendations/" class="nav-item ai-planning-btn active">
+    <a href="{% url 'ai_plan' %}" class="nav-item ai-planning-btn active">
         <div class="nav-icon-wrapper">
             <i class="bi bi-stars nav-icon"></i>
         </div>
-        <span>AI 规划</span>
+        <span>AI规划</span>
+    </a>
+    <a href="{% url 'recommendations_view' %}" class="nav-item">
+        <i class="bi bi-grid-3x3-gap nav-icon"></i>
+        <span>推荐</span>
     </a>
     <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}{% endif %}" class="nav-item">
         <i class="bi bi-person nav-icon"></i>

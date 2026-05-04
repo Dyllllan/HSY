@@ -85,7 +85,7 @@
     <div class="row g-3">
         {% for job in recommendations %}
         <div class="col-12">
-            <div class="card job-card position-relative">
+            <div class="card job-card position-relative" data-job-id="{{ job.id }}">
                 <span class="recommendation-badge">
                     推荐 {% if forloop.first %}♥{% elif forloop.counter <= 3 %}⭐{% endif %}
                 </span>
@@ -189,14 +189,17 @@
             card.addEventListener('click', function() {
                 const jobId = this.dataset.jobId;
                 if (jobId) {
-                    fetch('/api/track-recommendation-click/', {
+                    fetch('{% url "track_recommendation_click" %}', {
                         method: 'POST',
-                        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json',
+                        },
                         body: JSON.stringify({
                             job_id: jobId,
                             recommendation_type: 'personalized'
                         })
-                    });
+                    }).catch(function() {});
                 }
             });
         });

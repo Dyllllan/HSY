@@ -486,10 +486,12 @@
         <span>收藏</span>
     </button>
     {% if page.source_url %}
-    <a href="{{ page.source_url }}" target="_blank" class="btn-apply">
+    <button type="button" class="btn-apply" id="job-apply-btn"
+        data-job-id="{{ page.id }}"
+        data-source-url="{{ page.source_url }}">
         <div>一键前往投递</div>
         <div class="apply-source">(源自{{ page.source_website }})</div>
-    </a>
+    </button>
     {% else %}
     <button class="btn-apply" onclick="alert('暂无投递链接')">
         <div>一键前往投递</div>
@@ -563,5 +565,48 @@
         window.location.href = '{% url "account_login" %}?next={{ request.path }}';
         {% endif %}
     }
+    
+    document.getElementById('job-apply-btn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        const btn = this;
+        const url = btn.dataset.sourceUrl;
+        {% if user.is_authenticated %}
+        fetch('{% url "apply_job_api" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ job_id: {{ page.id }} }),
+            credentials: 'same-origin'
+        }).then(response => {
+            if (response.status === 401) {
+                window.location.href = '{% url "account_login" %}?next=' + encodeURIComponent(window.location.pathname);
+                return Promise.reject();
+            }
+            if (!response.ok) {
+                return response.json().then(function(d) {
+                    throw new Error(d.error || d.message || '请求失败');
+                });
+            }
+            return response.json();
+        }).then(data => {
+            if (!data) return;
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            if (data.success) {
+                if (url) {
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                } else {
+                    alert('投递已记录');
+                }
+            }
+        }).catch(() => {});
+        {% else %}
+        window.location.href = '{% url "account_login" %}?next=' + encodeURIComponent(window.location.pathname);
+        {% endif %}
+    });
 </script>
 {% endblock %}

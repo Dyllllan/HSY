@@ -263,7 +263,7 @@
         align-items: center;
         justify-content: center;
         gap: 4px;
-        padding: 6px 16px;
+        padding: 6px 8px;
         color: #999999;
         text-decoration: none;
         font-size: 12px;
@@ -464,7 +464,7 @@
         <i class="bi bi-chevron-right feature-arrow"></i>
     </a>
     
-    <a href="/AIresult/" class="feature-item">
+    <a href="{% url 'ai_result' %}" class="feature-item">
         <div class="feature-icon purple">
             <i class="bi bi-stars"></i>
         </div>
@@ -518,11 +518,15 @@
         <i class="bi bi-house-fill nav-icon"></i>
         <span>首页</span>
     </a>
-    <a href="/recommendations/" class="nav-item ai-planning-btn">
+    <a href="{% url 'ai_plan' %}" class="nav-item ai-planning-btn">
         <div class="nav-icon-wrapper">
             <i class="bi bi-stars nav-icon"></i>
         </div>
-        <span>AI 规划</span>
+        <span>AI规划</span>
+    </a>
+    <a href="{% url 'recommendations_view' %}" class="nav-item">
+        <i class="bi bi-grid-3x3-gap nav-icon"></i>
+        <span>推荐</span>
     </a>
     <a href="{% url 'account_profile' %}" class="nav-item active">
         <i class="bi bi-person nav-icon"></i>

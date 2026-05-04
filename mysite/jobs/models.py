@@ -86,24 +86,24 @@ class JobPage(Page):
     @property
     def save_count(self):
         """收藏数量"""
-        return self.applications.filter(status='saved').count()
+        return self.applications.filter(is_saved=True).count()
     
     @property
     def apply_count(self):
         """申请数量"""
-        return self.applications.filter(status='applied').count()
+        return self.applications.filter(applied_at__isnull=False).count()
     
     def is_saved_by_user(self, user):
         """检查用户是否已收藏"""
         if not user.is_authenticated:
             return False
-        return self.applications.filter(user=user, status='saved').exists()
+        return self.applications.filter(user=user, is_saved=True).exists()
     
     def is_applied_by_user(self, user):
         """检查用户是否已申请"""
         if not user.is_authenticated:
             return False
-        return self.applications.filter(user=user, status='applied').exists()
+        return self.applications.filter(user=user, applied_at__isnull=False).exists()
 
     class Meta:
         verbose_name = "职位页面"
@@ -804,8 +804,8 @@ class StudentProfile(models.Model):
             from django.apps import apps
             JobApplication = apps.get_model('jobs', 'JobApplication')
             applications = JobApplication.objects.filter(user=self.user)
-            saved = applications.filter(status='saved').count()
-            applied = applications.filter(status='applied').count()
+            saved = applications.filter(is_saved=True).count()
+            applied = applications.filter(applied_at__isnull=False).count()
             return f"收藏: {saved} | 申请: {applied}"
         except Exception:
             return "-"
@@ -813,10 +813,9 @@ class StudentProfile(models.Model):
 
 
 class JobApplication(models.Model):
+    """同一用户针对同一职位一条记录：收藏与投递独立，投递进度用 status 表示。"""
     STATUS_CHOICES = [
-        ('saved', '已收藏'),
-        ('applied', '已申请'),
-        ('viewed', '已查看'),
+        ('applied', '已投递'),
         ('contacted', '已联系'),
         ('rejected', '已拒绝'),
         ('accepted', '已接受'),
@@ -834,14 +833,18 @@ class JobApplication(models.Model):
         related_name='applications'
     )
     
+    is_saved = models.BooleanField('是否收藏', default=False)
+    
+    applied_at = models.DateTimeField('投递时间', null=True, blank=True)
+    
     status = models.CharField(
-        '申请状态',
+        '投递进度',
         max_length=20,
         choices=STATUS_CHOICES,
-        default='saved'
+        blank=True,
+        default='',
+        help_text='仅在已投递后表示跟进状态；未投递时留空',
     )
-    
-    applied_date = models.DateTimeField('申请时间', null=True, blank=True)
     notes = models.TextField('备注', blank=True)
     
     # 来源追踪
@@ -859,12 +862,6 @@ class JobApplication(models.Model):
     
     def __str__(self):
         return f"{self.user.email} - {self.job_page.job_title}"
-    
-    def save(self, *args, **kwargs):
-        # 如果是第一次申请，记录申请时间
-        if self.status == 'applied' and not self.applied_date:
-            self.applied_date = timezone.now()
-        super().save(*args, **kwargs)
 
 
 class ResumeIndexPage(Page):

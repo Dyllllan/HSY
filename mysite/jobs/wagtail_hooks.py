@@ -112,9 +112,8 @@ class StudentProfileViewSet(SnippetViewSet):
         
         try:
             applications = JobApplication.objects.filter(user=obj.user)
-            saved_count = applications.filter(status='saved').count()
-            applied_count = applications.filter(status='applied').count()
-            viewed_count = applications.filter(status='viewed').count()
+            saved_count = applications.filter(is_saved=True).count()
+            applied_count = applications.filter(applied_at__isnull=False).count()
             total_count = applications.count()
             
             html = f"""
@@ -130,12 +129,8 @@ class StudentProfileViewSet(SnippetViewSet):
                         <td style="padding: 8px;"><span style="color: #28a745; font-size: 16px;">{applied_count}</span> 个</td>
                     </tr>
                     <tr>
-                        <td style="padding: 8px; font-weight: bold;">查看职位：</td>
-                        <td style="padding: 8px;"><span style="color: #17a2b8; font-size: 16px;">{viewed_count}</span> 个</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; font-weight: bold;">总操作数：</td>
-                        <td style="padding: 8px;"><strong style="font-size: 16px;">{total_count}</strong> 次</td>
+                        <td style="padding: 8px; font-weight: bold;">总记录数：</td>
+                        <td style="padding: 8px;"><strong style="font-size: 16px;">{total_count}</strong> 条</td>
                     </tr>
                 </table>
             </div>

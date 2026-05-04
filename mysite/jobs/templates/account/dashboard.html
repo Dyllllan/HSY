@@ -394,12 +394,12 @@
                                         <i class="bi bi-building me-1"></i>{{ app.job_page.company_name }}
                                     </div>
                                 </div>
-                                <span class="badge {% if app.status == 'applied' %}bg-warning{% elif app.status == 'contacted' %}bg-info{% elif app.status == 'accepted' %}bg-success{% else %}bg-secondary{% endif %}">
-                                    {{ app.get_status_display }}
+                                <span class="badge {% if app.status == 'applied' %}bg-warning{% elif app.status == 'contacted' %}bg-info{% elif app.status == 'accepted' %}bg-success{% elif app.status == 'rejected' %}bg-secondary{% else %}bg-primary{% endif %}">
+                                    {% if app.status %}{{ app.get_status_display }}{% else %}已投递{% endif %}
                                 </span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">{{ app.applied_date|date:"Y-m-d H:i" }}</small>
+                                <small class="text-muted">{{ app.applied_at|date:"Y-m-d H:i" }}</small>
                                 <div class="job-actions">
                                     {% if app.job_page.source_url %}
                                     <a href="{{ app.job_page.source_url }}" target="_blank" class="btn btn-sm btn-primary">
@@ -416,7 +416,7 @@
                         <div class="empty-state">
                             <i class="bi bi-send"></i>
                             <p>暂无申请记录</p>
-                            <a href="/recommendations/" class="btn btn-primary">查看推荐职位</a>
+                            <a href="{% url 'recommendations_view' %}" class="btn btn-primary">查看推荐职位</a>
                         </div>
                         {% endfor %}
                     </div>
@@ -533,7 +533,7 @@
     // 保存备注
     function saveNotes(applicationId) {
         const notes = document.getElementById(`notesText${applicationId}`).value;
-        fetch(`/api/update-application-notes/${applicationId}/`, {
+        fetch(`{% url 'update_application_notes' application_id=999999 %}`.replace('999999', applicationId), {
             method: 'POST',
             headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
             body: JSON.stringify({notes: notes})

@@ -63,8 +63,8 @@ class CustomUserAdmin(BaseUserAdmin):
             return "-"
         try:
             applications = JobApplication.objects.filter(user=obj)
-            saved = applications.filter(status='saved').count()
-            applied = applications.filter(status='applied').count()
+            saved = applications.filter(is_saved=True).count()
+            applied = applications.filter(applied_at__isnull=False).count()
             return format_html(
                 '收藏: <span style="color: #007cba;">{}</span> | '
                 '申请: <span style="color: #28a745;">{}</span>',
@@ -95,9 +95,8 @@ class CustomUserAdmin(BaseUserAdmin):
         
         # 统计职位申请相关数据
         applications = JobApplication.objects.filter(user=obj)
-        saved_count = applications.filter(status='saved').count()
-        applied_count = applications.filter(status='applied').count()
-        viewed_count = applications.filter(status='viewed').count()
+        saved_count = applications.filter(is_saved=True).count()
+        applied_count = applications.filter(applied_at__isnull=False).count()
         total_applications = applications.count()
         
         # 统计最近活动
@@ -120,12 +119,8 @@ class CustomUserAdmin(BaseUserAdmin):
                     <td style="padding: 5px;"><span style="color: #28a745;">{applied_count}</span> 个</td>
                 </tr>
                 <tr>
-                    <td style="padding: 5px; font-weight: bold;">查看职位：</td>
-                    <td style="padding: 5px;"><span style="color: #17a2b8;">{viewed_count}</span> 个</td>
-                </tr>
-                <tr>
-                    <td style="padding: 5px; font-weight: bold;">总操作数：</td>
-                    <td style="padding: 5px;"><strong>{total_applications}</strong> 次</td>
+                    <td style="padding: 5px; font-weight: bold;">总记录数：</td>
+                    <td style="padding: 5px;"><strong>{total_applications}</strong> 条</td>
                 </tr>
             </table>
         """
@@ -174,19 +169,24 @@ class CustomUserAdmin(BaseUserAdmin):
                     <tbody>
             """
             for app in recent_applications:
-                status_colors = {
-                    'saved': '#007cba',
-                    'applied': '#28a745',
-                    'viewed': '#17a2b8',
-                    'contacted': '#ffc107',
-                    'rejected': '#dc3545',
-                    'accepted': '#28a745'
-                }
-                status_color = status_colors.get(app.status, '#6c757d')
+                if app.applied_at:
+                    status_label = app.get_status_display() or '已投递'
+                    status_color = {
+                        'applied': '#ffc107',
+                        'contacted': '#17a2b8',
+                        'rejected': '#dc3545',
+                        'accepted': '#28a745',
+                    }.get(app.status, '#28a745')
+                elif app.is_saved:
+                    status_label = '已收藏'
+                    status_color = '#007cba'
+                else:
+                    status_label = '-'
+                    status_color = '#6c757d'
                 html += f"""
                         <tr>
                             <td style="padding: 5px;">{app.job_page.job_title}</td>
-                            <td style="padding: 5px;"><span style="color: {status_color};">{app.get_status_display()}</span></td>
+                            <td style="padding: 5px;"><span style="color: {status_color};">{status_label}</span></td>
                             <td style="padding: 5px;">{app.updated_at.strftime('%Y-%m-%d %H:%M')}</td>
                         </tr>
                 """
@@ -275,8 +275,8 @@ class StudentProfileAdmin(admin.ModelAdmin):
             return "-"
         try:
             applications = JobApplication.objects.filter(user=obj.user)
-            saved = applications.filter(status='saved').count()
-            applied = applications.filter(status='applied').count()
+            saved = applications.filter(is_saved=True).count()
+            applied = applications.filter(applied_at__isnull=False).count()
             return format_html(
                 '收藏: <span style="color: #007cba;">{}</span> | '
                 '申请: <span style="color: #28a745;">{}</span>',
@@ -292,9 +292,8 @@ class StudentProfileAdmin(admin.ModelAdmin):
             return "保存后显示统计信息"
         
         applications = JobApplication.objects.filter(user=obj.user)
-        saved_count = applications.filter(status='saved').count()
-        applied_count = applications.filter(status='applied').count()
-        viewed_count = applications.filter(status='viewed').count()
+        saved_count = applications.filter(is_saved=True).count()
+        applied_count = applications.filter(applied_at__isnull=False).count()
         total_count = applications.count()
         
         html = f"""
@@ -310,12 +309,8 @@ class StudentProfileAdmin(admin.ModelAdmin):
                     <td style="padding: 5px;"><span style="color: #28a745;">{applied_count}</span> 个</td>
                 </tr>
                 <tr>
-                    <td style="padding: 5px; font-weight: bold;">查看职位：</td>
-                    <td style="padding: 5px;"><span style="color: #17a2b8;">{viewed_count}</span> 个</td>
-                </tr>
-                <tr>
-                    <td style="padding: 5px; font-weight: bold;">总操作数：</td>
-                    <td style="padding: 5px;"><strong>{total_count}</strong> 次</td>
+                    <td style="padding: 5px; font-weight: bold;">总记录数：</td>
+                    <td style="padding: 5px;"><strong>{total_count}</strong> 条</td>
                 </tr>
             </table>
         </div>
@@ -331,11 +326,11 @@ class JobApplicationAdmin(admin.ModelAdmin):
     """职位申请管理界面"""
     
     list_display = (
-        'user_info', 'job_info', 'status', 'applied_date',
+        'user_info', 'job_info', 'is_saved', 'status', 'applied_at',
         'created_at', 'updated_at'
     )
     
-    list_filter = ('status', 'created_at', 'applied_date', 'source')
+    list_filter = ('is_saved', 'status', 'created_at', 'applied_at', 'source')
     
     search_fields = (
         'user__username', 'user__email',
@@ -348,10 +343,10 @@ class JobApplicationAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('基本信息', {
-            'fields': ('user', 'job_page', 'status')
+            'fields': ('user', 'job_page', 'is_saved', 'status')
         }),
         ('详细信息', {
-            'fields': ('applied_date', 'notes')
+            'fields': ('applied_at', 'notes')
         }),
         ('追踪信息', {
             'fields': ('source', 'ip_address'),

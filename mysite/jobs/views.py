@@ -98,16 +98,16 @@ def dashboard(request):
     user_applications = JobApplication.objects.filter(user=user)
     
     # 统计信息
-    saved_count = user_applications.filter(status='saved').count()
-    applied_count = user_applications.filter(status='applied').count()
+    saved_count = user_applications.filter(is_saved=True).count()
+    applied_count = user_applications.filter(applied_at__isnull=False).count()
     
     # 计算匹配度（简单算法：基于收藏和申请的比例）
     total_jobs = JobPage.objects.live().count()
     match_rate = min(100, int((saved_count + applied_count) / max(1, total_jobs) * 100)) if total_jobs > 0 else 0
     
     # 获取收藏和申请的记录
-    saved_applications = user_applications.filter(status='saved').select_related('job_page')[:10]
-    applied_applications = user_applications.filter(status='applied').select_related('job_page')[:10]
+    saved_applications = user_applications.filter(is_saved=True).select_related('job_page')[:10]
+    applied_applications = user_applications.filter(applied_at__isnull=False).select_related('job_page')[:10]
     
     return render(request, 'account/dashboard.html', {
         'profile': profile,
@@ -145,8 +145,8 @@ def profile_page(request):
     user_applications = JobApplication.objects.filter(user=user)
     
     # 统计信息
-    applied_count = user_applications.filter(status='applied').count()  # 已投递
-    pending_interview_count = user_applications.filter(status__in=['contacted', 'applied']).count()  # 待面试（已申请或已联系状态）
+    applied_count = user_applications.filter(applied_at__isnull=False).count()
+    pending_interview_count = user_applications.filter(applied_at__isnull=False, status__in=["applied", "contacted"]).count()
     
     # 计算平均竞争力（简单算法：基于申请成功率）
     total_applications = user_applications.count()
@@ -177,7 +177,7 @@ def saved_jobs_list(request):
     # 获取用户收藏的所有职位
     saved_applications = JobApplication.objects.filter(
         user=user,
-        status='saved'
+        is_saved=True,
     ).select_related('job_page').order_by('-created_at')
     
     # 分页
@@ -397,56 +397,35 @@ def upload_resume_api(request):
 
 @login_required
 def analyze_resume_api(request):
-    """API: AI分析简历"""
+    """遗留接口：上传后已做文本与字段提取，此处不再生成完整报告。"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': '仅支持POST请求'})
     
-    import json
-    data = json.loads(request.body)
-    file_id = data.get('file_id')
+    try:
+        profile = request.user.student_profile
+    except StudentProfile.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '请先完善个人档案'})
     
+    import json
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': '无效的请求数据'})
+    
+    file_id = data.get('file_id')
     if not file_id:
         return JsonResponse({'success': False, 'message': '缺少文件ID'})
     
-    # 获取文件
-    from django.core.files.storage import default_storage
-    from django.conf import settings
     import os
+    from django.conf import settings
+    file_path = os.path.join(settings.MEDIA_ROOT, file_id)
+    if not os.path.exists(file_path):
+        return JsonResponse({'success': False, 'message': '文件不存在'})
     
-    try:
-        # 构建完整文件路径
-        file_path = os.path.join(settings.MEDIA_ROOT, file_id)
-        if not os.path.exists(file_path):
-            return JsonResponse({'success': False, 'message': '文件不存在'})
-        file = open(file_path, 'rb')
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'文件读取失败: {str(e)}'})
-    
-    # 调用AI分析接口
-    try:
-        report = generate_ai_report(file_path, request.user)
-        file.close()
-        
-        # 保存分析结果到用户档案
-        try:
-            profile, created = StudentProfile.objects.get_or_create(user=request.user)
-            profile.ai_report = report
-            profile.ai_report_updated_at = timezone.now()
-            profile.save()
-        except Exception as e:
-            print(f'保存AI报告失败: {str(e)}')
-        
-        return JsonResponse({
-            'success': True,
-            'report': report,
-            'message': '分析完成'
-        })
-    except Exception as e:
-        file.close()
-        return JsonResponse({
-            'success': False,
-            'message': f'分析失败: {str(e)}'
-        })
+    return JsonResponse({
+        'success': True,
+        'message': '请继续确认简历信息，完整报告将在确认后生成',
+    })
 
 @login_required
 def upload_avatar_api(request):
@@ -483,12 +462,6 @@ def upload_avatar_api(request):
         return JsonResponse({
             'success': False,
             'message': f'上传失败: {str(e)}'
-        })
-    except Exception as e:
-        file.close()
-        return JsonResponse({
-            'success': False,
-            'message': f'分析失败: {str(e)}'
         })
 
 def generate_ai_report(file, user):
@@ -572,7 +545,6 @@ def generate_ai_report(file, user):
     return report
 
 @login_required
-@login_required
 def edit_resume_info(request):
     """简历信息编辑页面"""
     user = request.user
@@ -590,7 +562,7 @@ def edit_resume_info(request):
     # 如果没有简历，重定向到上传页面
     if not profile.resume:
         messages.info(request, '请先上传简历')
-        return redirect('ai_career_navigation')
+        return redirect('ai_plan')
     
     # 如果没有完成AI提取，尝试提取
     if not profile.ai_extraction_completed:
@@ -620,6 +592,7 @@ def edit_resume_info(request):
         'user': user,
     })
 
+@login_required
 def ai_result_page(request):
     """AI分析结果页面"""
     user = request.user
@@ -759,7 +732,7 @@ def confirm_resume_info_api(request):
             return JsonResponse({
                 'success': True,
                 'message': '确认成功，AI分析已完成',
-                'redirect_url': '/AIresult/'
+                'redirect_url': '/ai/result/'
             })
         else:
             return JsonResponse({

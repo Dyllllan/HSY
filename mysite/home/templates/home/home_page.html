@@ -775,7 +775,7 @@
         align-items: center;
         justify-content: center;
         gap: 4px;
-        padding: 6px 16px;
+        padding: 6px 10px;
         color: #999999;
         text-decoration: none;
         font-size: 12px;
@@ -1017,7 +1017,7 @@
         <div class="ai-planning-text">
             目前的岗位仅为通用推荐。点击去匹配,解锁你的专属竞争力画像与100%契合岗位。
         </div>
-        <a href="/recommendations/" class="ai-planning-btn">
+        <a href="{% url 'ai_plan' %}" class="ai-planning-btn">
             <span>立即开启规划</span>
             <i class="bi bi-arrow-right"></i>
         </a>
@@ -1045,7 +1045,7 @@
         <div class="ai-planning-text">
             查看你的AI能力测评报告，了解12个职业维度的潜能评估，获取100%契合的岗位推荐。
         </div>
-        <a href="/AIresult/" class="ai-planning-btn">
+        <a href="{% url 'ai_result' %}" class="ai-planning-btn">
             <span>查看测评报告</span>
             <i class="bi bi-arrow-right"></i>
         </a>
@@ -1058,7 +1058,7 @@
     <div class="ai-banner-text">
         目前岗位仅为通用推荐，上传简历即可解锁<span class="highlight">100%匹配岗位</span>
     </div>
-    <a href="{% url 'account_profile' %}" class="ai-upload-btn">
+    <a href="{% if user.is_authenticated %}{% url 'ai_plan' %}{% else %}{% url 'account_login' %}?next=/ai/plan/{% endif %}" class="ai-upload-btn">
         立即上传 >
     </a>
 </div>
@@ -1145,11 +1145,15 @@
         <i class="bi bi-house-fill nav-icon"></i>
         <span>首页</span>
     </a>
-    <a href="/recommendations/" class="nav-item ai-planning-btn">
+    <a href="{% url 'ai_plan' %}" class="nav-item ai-planning-btn">
         <div class="nav-icon-wrapper">
             <i class="bi bi-stars nav-icon"></i>
         </div>
-        <span>AI 规划</span>
+        <span>AI规划</span>
+    </a>
+    <a href="{% url 'recommendations_view' %}" class="nav-item">
+        <i class="bi bi-grid-3x3-gap nav-icon"></i>
+        <span>推荐</span>
     </a>
     <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}{% endif %}" class="nav-item">
         <i class="bi bi-person nav-icon"></i>

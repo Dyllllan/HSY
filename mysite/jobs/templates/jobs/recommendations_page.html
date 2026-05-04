@@ -309,7 +309,7 @@
             <h2>请先登录</h2>
             <p>登录后即可查看为您个性化推荐的职位</p>
             <div class="d-flex gap-2 justify-content-center flex-wrap">
-                <a href="{% url 'account_login' %}?next=/recommendations/" class="btn btn-primary btn-lg">
+                <a href="{% url 'account_login' %}?next={% url 'recommendations_view' %}" class="btn btn-primary btn-lg">
                     <i class="bi bi-box-arrow-in-right me-2"></i>立即登录
                 </a>
                 <a href="{% url 'account_signup' %}" class="btn btn-outline-primary btn-lg">
