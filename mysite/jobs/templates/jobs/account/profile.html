@@ -7,7 +7,7 @@
 
 {% block extra_css %}
 <!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
 <style>
     body.profile-page {
         background: #F5F5F5;
@@ -518,17 +518,17 @@
         <i class="bi bi-house-fill nav-icon"></i>
         <span>首页</span>
     </a>
-    <a href="{% url 'ai_plan' %}" class="nav-item ai-planning-btn">
+    <a href="{% if user.is_authenticated %}{% url 'ai_plan' %}{% else %}{% url 'account_login' %}?next={% url 'ai_plan' %}{% endif %}" class="nav-item ai-planning-btn">
         <div class="nav-icon-wrapper">
             <i class="bi bi-stars nav-icon"></i>
         </div>
         <span>AI规划</span>
     </a>
-    <a href="{% url 'recommendations_view' %}" class="nav-item">
+    <a href="{% if user.is_authenticated %}{% url 'recommendations_view' %}{% else %}{% url 'account_login' %}?next={% url 'recommendations_view' %}{% endif %}" class="nav-item">
         <i class="bi bi-grid-3x3-gap nav-icon"></i>
         <span>推荐</span>
     </a>
-    <a href="{% url 'account_profile' %}" class="nav-item active">
+    <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}?next={% url 'account_profile' %}{% endif %}" class="nav-item active">
         <i class="bi bi-person nav-icon"></i>
         <span>我的</span>
     </a>
@@ -617,3 +617,5 @@
     });
 </script>
 {% endblock %}
+
+{% block bottom_nav %}{% endblock %}

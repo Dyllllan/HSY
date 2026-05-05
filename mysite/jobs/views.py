@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import Q
 from django.contrib import messages
 from django.http import JsonResponse
@@ -248,6 +249,8 @@ def get_location_data(request):
     
     return JsonResponse({'data': []})
 
+@ensure_csrf_cookie
+@login_required
 def ai_career_navigation(request):
     """AI职场导航页面"""
     return render(request, 'jobs/ai_career_navigation.html')
@@ -548,6 +551,7 @@ def generate_ai_report(file, user):
     
     return report
 
+@ensure_csrf_cookie
 @login_required
 def edit_resume_info(request):
     """简历信息编辑页面"""

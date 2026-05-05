@@ -62,9 +62,16 @@ import os
 
 # 方案1: DeepSeek（推荐，香港可用，性价比高）
 os.environ['AI_PROVIDER'] = 'deepseek'
-os.environ['AI_API_KEY'] = ''
-os.environ['AI_MODEL'] = 'deepseek-chat'
+os.environ['AI_API_KEY'] = 'sk-3d4c78e82ee74d218e1f42808be913e5'
 os.environ['AI_API_BASE'] = 'https://api.deepseek.com/v1'  # DeepSeek API端点
+os.environ['AI_MODEL'] = 'deepseek-chat'
+
+# local.py 在 base.py 之后导入；只改 os.environ 不会回写 base.py 已经读取过的设置。
+# AIService 读取的是 django.conf.settings，因此这里需要直接覆盖 Django settings。
+AI_PROVIDER = os.environ['AI_PROVIDER']
+AI_API_KEY = os.environ['AI_API_KEY']
+AI_API_BASE = os.environ['AI_API_BASE']
+AI_MODEL = os.environ['AI_MODEL']
 
 # 方案2: 通义千问（阿里云，香港可用，备选方案）
 # 如需使用通义千问，取消下面的注释并注释掉上面的DeepSeek配置

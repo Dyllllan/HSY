@@ -5,9 +5,9 @@
 
 {% block extra_css %}
 <!-- Bootstrap 5 CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 <!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
 <style>
     /* 通用页面样式 */
     .page-wrapper {
@@ -257,7 +257,8 @@
                     {% endif %}
                 {% endfor %}
                 {# 添加个人信息按钮 #}
-                <a href="{% url 'account_profile' %}" class="page-item-card">
+                {# 个人信息：未登录时先引导登录 #}
+                <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}?next={% url 'account_profile' %}{% endif %}" class="page-item-card">
                     <h4>
                         <i class="bi bi-person me-2"></i>个人信息
                     </h4>
@@ -274,7 +275,8 @@
                 <i class="bi bi-folder me-2"></i>相关页面
             </h3>
             <div class="page-list">
-                <a href="{% url 'account_profile' %}" class="page-item-card">
+                {# 个人信息：未登录时先引导登录 #}
+                <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}?next={% url 'account_profile' %}{% endif %}" class="page-item-card">
                     <h4>
                         <i class="bi bi-person me-2"></i>个人信息
                     </h4>
@@ -302,5 +304,5 @@
 
 {% block extra_js %}
 <!-- Bootstrap JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

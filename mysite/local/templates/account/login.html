@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
 <style>
     /* 移动端友好的登录页面样式 */
     body {
@@ -324,7 +324,7 @@
     
     <!-- 登录表单 -->
     <div class="login-form">
-        <form method="POST" action="{% url 'account_login' %}">
+        <form method="POST" action="{% url 'account_login' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">
             {% csrf_token %}
             
             {% if form.non_field_errors %}
@@ -370,6 +370,8 @@
             
             {% if redirect_field_value %}
             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+            {% elif request.GET.next %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}"/>
             {% endif %}
             
             <!-- 登录按钮 -->
@@ -379,7 +381,7 @@
             
             <!-- 注册链接 -->
             <div class="register-link">
-                还没有账号？<a href="{% url 'account_signup' %}">立即注册</a>
+                还没有账号？<a href="{% url 'account_signup' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">立即注册</a>
             </div>
         </form>
         

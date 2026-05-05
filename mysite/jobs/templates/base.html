@@ -6,11 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#3f51b5">
     <title>{% block title %}学生求职推荐{% endblock %}</title>
+    <link rel="dns-prefetch" href="https://cdn.bootcdn.net">
     
-    <!-- Bootstrap 5 CSS (移动端优化版本) -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- 图标库 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
     
     <!-- 自定义移动端样式 -->
     <style>
@@ -75,7 +76,12 @@
             <a class="navbar-brand fw-bold text-primary" href="/">
                 <i class="bi bi-briefcase me-1"></i>学生求职
             </a>
-            {% include 'includes/user_menu.html' %}
+            <button class="navbar-toggler py-2" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavbar" aria-controls="siteNavbar" aria-expanded="false" aria-label="打开菜单">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-lg-end mt-2 mt-lg-0" id="siteNavbar">
+                {% include 'includes/user_menu.html' %}
+            </div>
         </div>
     </nav>
     
@@ -85,6 +91,7 @@
     </main>
     
     <!-- 固定底部导航（类似App标签栏） -->
+    {% block bottom_nav %}
     <nav class="bottom-nav">
         <div class="container-fluid">
             <div class="row text-center py-2">
@@ -95,19 +102,19 @@
                     </a>
                 </div>
                 <div class="col">
-                    <a href="{% url 'ai_plan' %}" class="text-decoration-none text-dark d-block">
+                    <a href="{% if user.is_authenticated %}{% url 'ai_plan' %}{% else %}{% url 'account_login' %}?next={% url 'ai_plan' %}{% endif %}" class="text-decoration-none text-dark d-block">
                         <i class="bi bi-stars fs-5"></i>
                         <div class="small">AI规划</div>
                     </a>
                 </div>
                 <div class="col">
-                    <a href="{% url 'recommendations_view' %}" class="text-decoration-none text-dark d-block">
+                    <a href="{% if user.is_authenticated %}{% url 'recommendations_view' %}{% else %}{% url 'account_login' %}?next={% url 'recommendations_view' %}{% endif %}" class="text-decoration-none text-dark d-block">
                         <i class="bi bi-stars fs-5"></i>
                         <div class="small">推荐</div>
                     </a>
                 </div>
                 <div class="col">
-                    <a href="{% url 'account_profile' %}" class="text-decoration-none text-dark d-block">
+                    <a href="{% if user.is_authenticated %}{% url 'account_profile' %}{% else %}{% url 'account_login' %}?next={% url 'account_profile' %}{% endif %}" class="text-decoration-none text-dark d-block">
                         <i class="bi bi-person fs-5"></i>
                         <div class="small">我的</div>
                     </a>
@@ -116,8 +123,10 @@
         </div>
     </nav>
     
+    {% endblock %}
+    
     <!-- Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     
     <!-- 移动端交互优化 -->
     <script>
@@ -125,7 +134,8 @@
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function (event) {
             const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) event.preventDefault();
+            const interactiveTarget = event.target.closest('a, button, input, select, textarea, label');
+            if (!interactiveTarget && now - lastTouchEnd <= 300) event.preventDefault();
             lastTouchEnd = now;
         }, false);
         

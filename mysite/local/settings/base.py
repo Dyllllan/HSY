@@ -76,10 +76,12 @@ ACCOUNT_RATE_LIMITS = {
 ACCOUNT_FORMS = {
     "signup": "jobs.forms.CustomSignupForm",
 }
-ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True
 
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
+# @login_required 与未登录重定向目标（必须与 allauth 登录路径一致）
+LOGIN_URL = "/accounts/login/"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
